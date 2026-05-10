@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Arean</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f5ff;
+  --card: #ffffff;
+  --card2: #f0ebff;
+  --border: #ddd5f5;
+  --text: #1e1535;
+  --muted: #8b7bae;
+  --rect: #6c63ff;
+  --rect-fill: rgba(108,99,255,0.18);
+  --par: #e8720c;
+  --par-fill: rgba(232,114,12,0.18);
+  --tri: #0cb87a;
+  --tri-fill: rgba(12,184,122,0.18);
+  --right: #0cb87a;
+  --wrong: #f03e5a;
+  --accent: #6c63ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 16px 60px;
+  background-image:
+    radial-gradient(circle at 5% 10%, rgba(108,99,255,0.08) 0%, transparent 40%),
+    radial-gradient(circle at 95% 90%, rgba(12,184,122,0.06) 0%, transparent 40%);
+}
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem; font-weight: 800;
+  color: var(--text); margin-bottom: 4px; letter-spacing: -0.5px;
+}
+.tagline { color: var(--muted); font-size: 0.88rem; margin-bottom: 22px; text-align: center; }
+
+/* Name overlay */
+#namn-overlay {
+  display: flex; position: fixed; inset: 0;
+  background: rgba(248,245,255,0.97); backdrop-filter: blur(10px);
+  z-index: 200; flex-direction: column; align-items: center;
+  justify-content: center; gap: 18px; text-align: center; padding: 24px;
+}
+#namn-overlay.dold { display: none; }
+.namn-rubrik { font-family: 'Syne', sans-serif; font-size: 1.9rem; font-weight: 800; color: var(--text); }
+.namn-under { color: var(--muted); font-size: 0.88rem; margin-top: -8px; }
+.namn-input {
+  width: 260px; padding: 13px 18px; border-radius: 14px;
+  border: 2px solid var(--border); background: var(--card);
+  color: var(--text); font-family: 'Syne', sans-serif;
+  font-size: 1.3rem; text-align: center; outline: none;
+  transition: border-color 0.2s; box-shadow: 0 4px 16px rgba(108,99,255,0.1);
+}
+.namn-input:focus { border-color: var(--accent); }
+.btn-starta {
+  background: var(--accent); color: white; border: none; border-radius: 14px;
+  padding: 13px 42px; font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(108,99,255,0.35); transition: all 0.15s;
+}
+.btn-starta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,99,255,0.45); }
+
+/* Score */
+.scorebar {
+  display: flex; gap: 24px; margin-bottom: 18px;
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 16px; padding: 11px 26px;
+  box-shadow: 0 4px 16px rgba(108,99,255,0.08);
+}
+.score-box { text-align: center; }
+.score-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; }
+.score-num.r { color: var(--right); }
+.score-num.f { color: var(--wrong); }
+.score-num.n { color: var(--muted); }
+.score-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 5px; margin-bottom: 18px;
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 14px; padding: 4px;
+}
+.tab {
+  padding: 9px 16px; border-radius: 10px; border: none;
+  font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 800;
+  cursor: pointer; background: transparent; color: var(--muted);
+  transition: all 0.2s; white-space: nowrap;
+}
+.tab.active-rect { background: var(--rect); color: white; }
+.tab.active-par  { background: var(--par);  color: white; }
+.tab.active-tri  { background: var(--tri);  color: white; }
+
+/* Progress */
+.progress { display: flex; gap: 6px; margin-bottom: 18px; justify-content: center; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+.dot.ratt  { background: var(--right); }
+.dot.fel   { background: var(--wrong); }
+.dot.aktiv { background: var(--accent); }
+
+/* Card */
+.card {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 22px; padding: 24px 22px; width: 100%; max-width: 560px;
+  box-shadow: 0 6px 28px rgba(108,99,255,0.10); margin-bottom: 16px;
+}
+.fraga-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; }
+
+/* Formula pill */
+.formel-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 99px; padding: 5px 16px;
+  font-family: 'Syne', sans-serif; font-size: 0.88rem; font-weight: 800;
+  margin-bottom: 18px; border: 2px solid transparent;
+}
+.formel-rect { background: rgba(108,99,255,0.1); color: var(--rect); border-color: rgba(108,99,255,0.2); }
+.formel-par  { background: rgba(232,114,12,0.1);  color: var(--par);  border-color: rgba(232,114,12,0.2); }
+.formel-tri  { background: rgba(12,184,122,0.1);  color: var(--tri);  border-color: rgba(12,184,122,0.2); }
+
+/* SVG shape */
+.shape-wrap {
+  display: flex; justify-content: center;
+  margin-bottom: 20px;
+}
+.shape-svg { border-radius: 12px; background: var(--card2); border: 1px solid var(--border); }
+
+/* Dimension labels */
+.dim-table {
+  display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap;
+}
+.dim-chip {
+  flex: 1; min-width: 100px; background: var(--card2); border: 2px solid var(--border);
+  border-radius: 12px; padding: 10px 14px; text-align: center;
+}
+.dim-chip .dim-name { font-size: 0.72rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.dim-chip .dim-val  { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; }
+.dim-chip.rect-c .dim-val { color: var(--rect); }
+.dim-chip.par-c  .dim-val { color: var(--par); }
+.dim-chip.tri-c  .dim-val { color: var(--tri); }
+
+/* Question */
+.fraga-text {
+  font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800;
+  margin-bottom: 16px; color: var(--text);
+}
+
+/* Grid vis */
+.grid-wrap { margin-bottom: 18px; }
+.grid-label { font-size: 0.72rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+
+/* Input */
+.svar-wrap { display: flex; align-items: center; gap: 10px; }
+.svar-input {
+  width: 120px; padding: 11px; border-radius: 12px;
+  border: 2px solid var(--border); background: var(--bg);
+  color: var(--text); font-family: 'Syne', sans-serif;
+  font-size: 1.5rem; text-align: center; outline: none; transition: border-color 0.2s;
+}
+.svar-input:focus { border-color: var(--accent); }
+.svar-input.ratt  { border-color: var(--right); background: rgba(12,184,122,0.07); }
+.svar-input.fel   { border-color: var(--wrong); background: rgba(240,62,90,0.07); }
+.svar-enhet { font-size: 0.95rem; color: var(--muted); font-weight: 700; }
+
+/* Buttons */
+.btn-svara {
+  width: 100%; background: var(--accent); color: white;
+  border: none; border-radius: 13px; padding: 13px;
+  font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 800;
+  cursor: pointer; margin-top: 16px; transition: all 0.15s;
+}
+.btn-svara:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108,99,255,0.3); }
+.btn-svara:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-nasta {
+  width: 100%; background: transparent; color: var(--accent);
+  border: 2px solid var(--accent); border-radius: 13px; padding: 11px;
+  font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
+  cursor: pointer; margin-top: 10px; display: none; transition: all 0.15s;
+}
+.btn-nasta.synlig { display: block; }
+.btn-nasta:hover { background: var(--accent); color: white; }
+
+/* Feedback */
+.feedback { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 800; min-height: 1.4rem; margin-top: 10px; text-align: center; }
+.feedback.ratt { color: var(--right); }
+.feedback.fel  { color: var(--wrong); }
+
+/* Explanation */
+.forklaring {
+  border-radius: 12px; padding: 14px 16px; margin-top: 12px;
+  font-size: 0.86rem; line-height: 1.8; display: none;
+}
+.forklaring.synlig { display: block; }
+.forklaring strong { color: var(--text); }
+.forklaring.rect-fk { background: rgba(108,99,255,0.07); border-left: 3px solid var(--rect); }
+.forklaring.par-fk  { background: rgba(232,114,12,0.07);  border-left: 3px solid var(--par); }
+.forklaring.tri-fk  { background: rgba(12,184,122,0.07);  border-left: 3px solid var(--tri); }
+.hl  { font-weight: 800; }
+.hl-rect { color: var(--rect); }
+.hl-par  { color: var(--par); }
+.hl-tri  { color: var(--tri); }
+
+/* Win overlay */
+#win-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(248,245,255,0.96); backdrop-filter: blur(10px);
+  z-index: 100; flex-direction: column; align-items: center;
+  justify-content: flex-start; gap: 10px; padding: 28px 16px 40px; overflow-y: auto;
+}
+#win-overlay.synlig { display: flex; }
+.win-emoji { font-size: 3rem; }
+.win-titel { font-family: 'Syne', sans-serif; font-size: 0.88rem; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; }
+.win-namn  { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; color: var(--accent); }
+.win-score { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 700; }
+.win-text  { color: var(--muted); font-size: 0.9rem; }
+.win-rubrik { font-family: 'Syne', sans-serif; font-size: 0.85rem; color: var(--muted); letter-spacing: 1px; width: 100%; max-width: 520px; text-align: left; margin-top: 8px; }
+.win-lista  { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 7px; }
+.win-rad { display: flex; align-items: flex-start; gap: 10px; background: var(--card); border-radius: 12px; padding: 10px 14px; border-left: 4px solid var(--border); }
+.win-rad.ratt { border-left-color: var(--right); }
+.win-rad.fel  { border-left-color: var(--wrong); }
+.win-rad-info { flex: 1; font-size: 0.82rem; line-height: 1.6; }
+.win-rad-q    { color: var(--muted); }
+.win-ditt-ratt { color: var(--right); font-weight: 700; }
+.win-ditt-fel  { color: var(--wrong); font-weight: 700; }
+.win-korrekt   { color: var(--accent); font-weight: 700; }
+.btn-igen {
+  background: var(--accent); color: white; border: none; border-radius: 14px;
+  padding: 13px 42px; font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800;
+  cursor: pointer; margin-top: 12px; box-shadow: 0 4px 20px rgba(108,99,255,0.3); transition: all 0.2s;
+}
+.btn-igen:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<!-- Name overlay -->
+<div id="namn-overlay">
+  <div style="font-size:3rem">📐</div>
+  <div class="namn-rubrik">Arean</div>
+  <div class="namn-under">Lär dig beräkna arean av geometriska figurer</div>
+  <input class="namn-input" id="spelar-namn" type="text" maxlength="20"
+    placeholder="Ditt namn..." onkeydown="if(event.key==='Enter')startaMedNamn()" autofocus>
+  <button class="btn-starta" onclick="startaMedNamn()">Spela! 🚀</button>
+</div>
+
+<h1>📐 Arean</h1>
+<p class="tagline">Lär dig beräkna arean av rektanglar, parallellogram och trianglar</p>
+
+<div class="scorebar">
+  <div class="score-box"><div class="score-num r" id="ratt-num">0</div><div class="score-lbl">✅ Rätt</div></div>
+  <div class="score-box"><div class="score-num f" id="fel-num">0</div><div class="score-lbl">❌ Fel</div></div>
+  <div class="score-box"><div class="score-num n" id="fraga-num">1</div><div class="score-lbl">av 10</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active-rect" id="tab-0" onclick="byttLage(0)">▭ Rektangel</button>
+  <button class="tab" id="tab-1" onclick="byttLage(1)">▱ Parallellogram</button>
+  <button class="tab" id="tab-2" onclick="byttLage(2)">△ Triangel</button>
+  <button class="tab" id="tab-3" onclick="byttLage(3)">🔀 Blandat</button>
+</div>
+
+<div class="progress" id="progress"></div>
+
+<div class="card">
+  <div class="fraga-label" id="fraga-label">Fråga 1 av 10</div>
+  <div id="formel-area"></div>
+  <div class="shape-wrap"><svg id="shape-svg" class="shape-svg" width="320" height="200"></svg></div>
+  <div class="dim-table" id="dim-table"></div>
+  <div class="fraga-text" id="fraga-text"></div>
+  <div id="input-area"></div>
+  <div class="feedback"   id="feedback"></div>
+  <div class="forklaring" id="forklaring"></div>
+  <button class="btn-svara" id="btn-svara" onclick="svara()">Svara!</button>
+  <button class="btn-nasta" id="btn-nasta" onclick="nastaFraga()">Nästa fråga →</button>
+</div>
+
+<div id="win-overlay">
+  <div class="win-emoji">🏆</div>
+  <div class="win-titel">Grattis!</div>
+  <div class="win-namn"  id="win-namn"></div>
+  <div class="win-score" id="win-score"></div>
+  <div class="win-text"  id="win-text"></div>
+  <div class="win-rubrik">📋 Alla frågor:</div>
+  <div class="win-lista" id="win-lista"></div>
+  <button class="btn-igen" onclick="startaOm()">Spela igen! 📐</button>
+</div>
+
+<script>
+var spelarNamn = ""
+var lage = 0   // 0=rektangel, 1=parallellogram, 2=triangel, 3=blandat
+var fragaNr = 0
+var totalFragor = 10
+var rattSvar = 0
+var felSvar = 0
+var svaratDenna = false
+var historia = []
+var q = {}
+
+var COLORS = { rect: "#6c63ff", par: "#e8720c", tri: "#0cb87a" }
+var FILLS  = { rect: "rgba(108,99,255,0.18)", par: "rgba(232,114,12,0.18)", tri: "rgba(12,184,122,0.18)" }
+
+var UNITS = [
+  { enhet: "cm",  enhet2: "cm²" },
+  { enhet: "m",   enhet2: "m²"  },
+  { enhet: "dm",  enhet2: "dm²" },
+  { enhet: "mm",  enhet2: "mm²" },
+  { enhet: "km",  enhet2: "km²" },
+]
+
+function slump(min, max) { return Math.floor(Math.random()*(max-min+1))+min }
+function slumpArr(arr)   { return arr[Math.floor(Math.random()*arr.length)] }
+
+function startaMedNamn() {
+  var val = document.getElementById("spelar-namn").value.trim()
+  spelarNamn = val !== "" ? val : "Spelare"
+  document.getElementById("namn-overlay").classList.add("dold")
+  startaOm()
+}
+
+function byttLage(n) {
+  lage = n
+  for (var i=0;i<4;i++) {
+    var t = document.getElementById("tab-"+i)
+    t.className = "tab"
+    if (i===n) {
+      if (n===0) t.className += " active-rect"
+      else if (n===1) t.className += " active-par"
+      else if (n===2) t.className += " active-tri"
+      else t.className += " active-rect"
+    }
+  }
+  startaOm()
+}
+
+function startaOm() {
+  fragaNr=0; rattSvar=0; felSvar=0; historia=[]
+  document.getElementById("win-overlay").classList.remove("synlig")
+  uppdateraScore(); byggProgress(); nastaFraga()
+}
+
+function genTyp() {
+  if (lage===0) return "rect"
+  if (lage===1) return "par"
+  if (lage===2) return "tri"
+  return ["rect","par","tri"][slump(0,2)]
+}
+
+function nastaFraga() {
+  if (fragaNr >= totalFragor) { visaWin(); return }
+  svaratDenna = false
+
+  document.getElementById("feedback").innerHTML = ""
+  document.getElementById("feedback").className = "feedback"
+  document.getElementById("forklaring").className = "forklaring"
+  document.getElementById("btn-nasta").classList.remove("synlig")
+  document.getElementById("btn-svara").style.display = "block"
+  document.getElementById("btn-svara").disabled = false
+  document.getElementById("fraga-num").innerHTML = fragaNr+1
+  document.getElementById("fraga-label").innerHTML = "Fråga "+(fragaNr+1)+" av "+totalFragor
+
+  var typ = genTyp()
+  var b = slump(2, 12)
+  var h = slump(2, 10)
+  var snedst = slump(1, 4)
+  var u = slumpArr(UNITS)
+  var korrekt
+
+  if (typ==="rect") {
+    korrekt = b * h
+    q = { typ:"rect", b:b, h:h, korrekt:korrekt, enhet:u.enhet, enhet2:u.enhet2 }
+  } else if (typ==="par") {
+    korrekt = b * h
+    q = { typ:"par", b:b, h:h, snedst:snedst, korrekt:korrekt, enhet:u.enhet, enhet2:u.enhet2 }
+  } else {
+    korrekt = (b * h) / 2
+    q = { typ:"tri", b:b, h:h, korrekt:korrekt, enhet:u.enhet, enhet2:u.enhet2 }
+  }
+
+  byggProgress()
+  renderFraga()
+}
+
+function renderFraga() {
+  var typ = q.typ
+  var c = COLORS[typ]
+  var f = FILLS[typ]
+
+  // Formula pill
+  var formelText = ""
+  var formelKlass = ""
+  if (typ==="rect") { formelText = "A = b × h"; formelKlass = "formel-rect" }
+  if (typ==="par")  { formelText = "A = b × h (h = höjden, inte sidan!)"; formelKlass = "formel-par" }
+  if (typ==="tri")  { formelText = "A = (b × h) ÷ 2"; formelKlass = "formel-tri" }
+  document.getElementById("formel-area").innerHTML =
+    '<div class="formel-pill '+formelKlass+'">📌 '+formelText+'</div>'
+
+  // SVG shape
+  var svg = document.getElementById("shape-svg")
+  var W=320, H=200
+  svg.setAttribute("viewBox","0 0 "+W+" "+H)
+  svg.innerHTML = ritaForm(typ, q.b, q.h, q.snedst||0, W, H, c, f, q.enhet)
+
+  // Dim chips
+  var dimHtml = ""
+  var chipC = typ==="rect"?"rect-c": typ==="par"?"par-c":"tri-c"
+  dimHtml += '<div class="dim-chip '+chipC+'"><div class="dim-name">Bas (b)</div><div class="dim-val">'+q.b+' '+q.enhet+'</div></div>'
+  dimHtml += '<div class="dim-chip '+chipC+'"><div class="dim-name">Höjd (h)</div><div class="dim-val">'+q.h+' '+q.enhet+'</div></div>'
+  document.getElementById("dim-table").innerHTML = dimHtml
+
+  // Question
+  var formNamn = typ==="rect"?"rektangeln": typ==="par"?"parallellogrammen":"triangeln"
+  document.getElementById("fraga-text").innerHTML = "Beräkna arean av "+formNamn+"!"
+
+  // Input
+  document.getElementById("input-area").innerHTML =
+    '<div class="svar-wrap">'+
+    '<input class="svar-input" id="svar-input" type="number" min="0" step="0.5" placeholder="?" onkeydown="if(event.key===\'Enter\')svara()">'+
+    '<span class="svar-enhet">'+q.enhet2+'</span>'+
+    '</div>'
+
+  setTimeout(function(){
+    var inp = document.getElementById("svar-input")
+    if (inp) inp.focus()
+  }, 80)
+}
+
+function ritaForm(typ, b, h, snedst, W, H, color, fill, enhet) {
+  var pad = 48
+  var uw = W - pad*2   // available width
+  var uh = H - pad*2   // available height
+
+  // Scale so shape fits
+  var scale = Math.min(uw / (b + snedst + 2), uh / (h + 2))
+  var sw = b * scale
+  var sh = h * scale
+  var sx = snedst * scale
+  var ox = (W - sw - sx) / 2
+  var oy = (H - sh) / 2
+
+  var svg = ""
+  // Grid dots
+  var gStep = scale
+  for (var gx = ox; gx <= ox+sw+sx+1; gx += gStep) {
+    for (var gy = oy; gy <= oy+sh+1; gy += gStep) {
+      svg += '<circle cx="'+gx+'" cy="'+gy+'" r="1.5" fill="'+color+'" opacity="0.2"/>'
+    }
+  }
+
+  var pts = ""
+  if (typ==="rect") {
+    pts = (ox)+","+(oy)+" "+(ox+sw)+","+(oy)+" "+(ox+sw)+","+(oy+sh)+" "+(ox)+","+(oy+sh)
+  } else if (typ==="par") {
+    pts = (ox+sx)+","+(oy)+" "+(ox+sx+sw)+","+(oy)+" "+(ox+sw)+","+(oy+sh)+" "+ox+","+(oy+sh)
+  } else {
+    // triangle: bottom-left, bottom-right, apex
+    var ax = ox + sw/2
+    pts = ox+","+(oy+sh)+" "+(ox+sw)+","+(oy+sh)+" "+ax+","+oy
+  }
+  svg += '<polygon points="'+pts+'" fill="'+fill+'" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round"/>'
+
+  // Dimension labels
+  if (typ==="rect") {
+    // base label (bottom)
+    svg += dimArrow(ox, oy+sh+20, ox+sw, oy+sh+20, color)
+    svg += '<text x="'+(ox+sw/2)+'" y="'+(oy+sh+38)+'" text-anchor="middle" fill="'+color+'" font-size="13" font-family="Syne,sans-serif" font-weight="700">b = '+b+' '+enhet+'</text>'
+    // height label (right)
+    svg += dimArrow(ox+sw+20, oy, ox+sw+20, oy+sh, color)
+    svg += '<text x="'+(ox+sw+40)+'" y="'+(oy+sh/2+5)+'" text-anchor="start" fill="'+color+'" font-size="13" font-family="Syne,sans-serif" font-weight="700">h = '+h+' '+enhet+'</text>'
+
+  } else if (typ==="par") {
+    // base label (bottom)
+    svg += dimArrow(ox, oy+sh+20, ox+sw, oy+sh+20, color)
+    svg += '<text x="'+(ox+sw/2)+'" y="'+(oy+sh+38)+'" text-anchor="middle" fill="'+color+'" font-size="13" font-family="Syne,sans-serif" font-weight="700">b = '+b+' '+enhet+'</text>'
+    // height: vertical dashed line from apex down
+    var hx = ox+sx+sw/2
+    svg += '<line x1="'+hx+'" y1="'+oy+'" x2="'+hx+'" y2="'+(oy+sh)+'" stroke="'+color+'" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>'
+    svg += dimArrow(hx+16, oy, hx+16, oy+sh, color)
+    svg += '<text x="'+(hx+34)+'" y="'+(oy+sh/2+5)+'" text-anchor="start" fill="'+color+'" font-size="13" font-family="Syne,sans-serif" font-weight="700">h = '+h+' '+enhet+'</text>'
+
+  } else {
+    // triangle base (bottom)
+    svg += dimArrow(ox, oy+sh+20, ox+sw, oy+sh+20, color)
+    svg += '<text x="'+(ox+sw/2)+'" y="'+(oy+sh+38)+'" text-anchor="middle" fill="'+color+'" font-size="13" font-family="Syne,sans-serif" font-weight="700">b = '+b+' '+enhet+'</text>'
+    // height: vertical dashed line from apex to base
+    var apexX = ox+sw/2
+    svg += '<line x1="'+apexX+'" y1="'+oy+'" x2="'+apexX+'" y2="'+(oy+sh)+'" stroke="'+color+'" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>'
+    svg += dimArrow(apexX+16, oy, apexX+16, oy+sh, color)
+    svg += '<text x="'+(apexX+34)+'" y="'+(oy+sh/2+5)+'" text-anchor="start" fill="'+color+'" font-size="13" font-family="Syne,sans-serif" font-weight="700">h = '+h+' '+enhet+'</text>'
+    // right angle mark at base of height
+    var sq=7
+    svg += '<rect x="'+(apexX)+'" y="'+(oy+sh-sq)+'" width="'+sq+'" height="'+sq+'" fill="none" stroke="'+color+'" stroke-width="1.5" opacity="0.6"/>'
+  }
+
+  return svg
+}
+
+function dimArrow(x1,y1,x2,y2,color) {
+  var s = '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+'" stroke-width="1.5" opacity="0.7"/>'
+  // small tick marks at ends
+  var dx = y2-y1 === 0 ? 0 : 5, dy = x2-x1 === 0 ? 0 : 5
+  if (x2-x1===0) { dx=5; dy=0 }
+  s += '<line x1="'+(x1-dx)+'" y1="'+y1+'" x2="'+(x1+dx)+'" y2="'+y1+'" stroke="'+color+'" stroke-width="1.5" opacity="0.7"/>'
+  s += '<line x1="'+(x2-dx)+'" y1="'+y2+'" x2="'+(x2+dx)+'" y2="'+y2+'" stroke="'+color+'" stroke-width="1.5" opacity="0.7"/>'
+  return s
+}
+
+function svara() {
+  if (svaratDenna) return
+  var inp = document.getElementById("svar-input")
+  if (!inp || inp.value==="") return
+  svaratDenna = true
+
+  var val = parseFloat(inp.value)
+  var ratt = val === q.korrekt
+  inp.disabled = true
+  inp.classList.add(ratt?"ratt":"fel")
+
+  var fb = document.getElementById("feedback")
+  var fk = document.getElementById("forklaring")
+
+  // Build forklaring
+  var forkl = ""
+  var fkKlass = "forklaring synlig "
+  if (q.typ==="rect") {
+    forkl = '<strong>Formel:</strong> A = b × h<br>'+
+            'A = <span class="hl hl-rect">'+q.b+'</span> × <span class="hl hl-rect">'+q.h+'</span> = <span class="hl hl-rect">'+q.korrekt+' '+q.enhet2+'</span>'
+    fkKlass += "rect-fk"
+  } else if (q.typ==="par") {
+    forkl = '<strong>Formel:</strong> A = b × h<br>'+
+            '(h är den lodräta höjden — inte den sneda sidan!)<br>'+
+            'A = <span class="hl hl-par">'+q.b+'</span> × <span class="hl hl-par">'+q.h+'</span> = <span class="hl hl-par">'+q.korrekt+' '+q.enhet2+'</span>'
+    fkKlass += "par-fk"
+  } else {
+    forkl = '<strong>Formel:</strong> A = (b × h) ÷ 2<br>'+
+            'En triangel är <em>halva</em> en rektangel med samma bas och höjd.<br>'+
+            'A = (<span class="hl hl-tri">'+q.b+'</span> × <span class="hl hl-tri">'+q.h+'</span>) ÷ 2 = '+q.b*q.h+' ÷ 2 = <span class="hl hl-tri">'+q.korrekt+' '+q.enhet2+'</span>'
+    fkKlass += "tri-fk"
+  }
+
+  if (ratt) {
+    rattSvar++
+    historia[fragaNr] = { resultat:"ratt", fraga:byggFragaTxt(), dittSvar:val+" "+q.enhet2, ratt:q.korrekt+" "+q.enhet2 }
+    fb.innerHTML = "✅ Rätt!"; fb.className = "feedback ratt"
+  } else {
+    felSvar++
+    historia[fragaNr] = { resultat:"fel", fraga:byggFragaTxt(), dittSvar:val+" "+q.enhet2, ratt:q.korrekt+" "+q.enhet2 }
+    fb.innerHTML = "❌ Fel! Rätt svar: "+q.korrekt+" "+q.enhet2; fb.className = "feedback fel"
+  }
+
+  fk.innerHTML = forkl
+  fk.className = fkKlass
+  document.getElementById("btn-svara").style.display = "none"
+  document.getElementById("btn-nasta").classList.add("synlig")
+  fragaNr++; uppdateraScore(); byggProgress()
+}
+
+function byggFragaTxt() {
+  var namn = q.typ==="rect"?"Rektangel": q.typ==="par"?"Parallellogram":"Triangel"
+  return namn+": b="+q.b+" "+q.enhet+", h="+q.h+" "+q.enhet+" → A=?"
+}
+
+function uppdateraScore() {
+  document.getElementById("ratt-num").innerHTML = rattSvar
+  document.getElementById("fel-num").innerHTML  = felSvar
+}
+
+function byggProgress() {
+  var html = ""
+  for (var i=0;i<totalFragor;i++) {
+    var k = "dot"
+    if (historia[i] && historia[i].resultat==="ratt") k+=" ratt"
+    else if (historia[i] && historia[i].resultat==="fel") k+=" fel"
+    else if (i===fragaNr) k+=" aktiv"
+    html += '<div class="'+k+'"></div>'
+  }
+  document.getElementById("progress").innerHTML = html
+}
+
+function visaWin() {
+  var pct = Math.round(rattSvar/totalFragor*100)
+  document.getElementById("win-namn").innerHTML  = spelarNamn
+  document.getElementById("win-score").innerHTML = rattSvar+" av "+totalFragor+" rätt ("+pct+"%)"
+  var t = pct===100?"🌟 Perfekt! Du kan alla areaformlerna!":pct>=80?"Mycket bra!":pct>=60?"Bra! Öva lite till!":"Fortsätt öva!"
+  document.getElementById("win-text").innerHTML = t
+
+  var html = ""
+  for (var i=0;i<historia.length;i++) {
+    var h = historia[i]
+    var ar_ratt = h.resultat==="ratt"
+    html += '<div class="win-rad '+h.resultat+'">'
+    html += '<div>'+(ar_ratt?"✅":"❌")+'</div>'
+    html += '<div class="win-rad-info">'
+    html += '<div class="win-rad-q">Fråga '+(i+1)+': '+h.fraga+'</div>'
+    if (ar_ratt) {
+      html += '<div class="win-ditt-ratt">Ditt svar: '+h.ratt+' ✓</div>'
+    } else {
+      html += '<div class="win-ditt-fel">Ditt svar: '+h.dittSvar+' ✗</div>'
+      html += '<div class="win-korrekt">→ Rätt svar: '+h.ratt+'</div>'
+    }
+    html += '</div></div>'
+  }
+  document.getElementById("win-lista").innerHTML = html
+  document.getElementById("win-overlay").classList.add("synlig")
+}
+
+byggProgress()
+</script>
+</body>
+</html>

@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Binärspelet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1b2a;
+      --surface: #1b2d3f;
+      --surface2: #243a50;
+      --on: #00e5ff;
+      --off: #1b2d3f;
+      --accent: #ff9f1c;
+      --green: #57cc99;
+      --red: #ff4d6d;
+      --text: #e0f4ff;
+      --muted: #5a8aa8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Nunito', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 16px 48px;
+      background-image:
+        radial-gradient(ellipse at 15% 0%, #0a2a4a 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 90%, #001a33 0%, transparent 55%);
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.6rem;
+      color: var(--on);
+      text-shadow: 0 0 30px rgba(0,229,255,0.5);
+      margin-bottom: 4px;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    /* Score bar */
+    .scorebar {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 24px;
+    }
+    .score-box {
+      text-align: center;
+    }
+    .score-num {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.2rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .score-lbl {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Mode tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 5px;
+    }
+    .tab {
+      padding: 8px 20px;
+      border-radius: 10px;
+      border: none;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.95rem;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: var(--on);
+      color: var(--bg);
+    }
+
+    /* Question card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: 24px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 540px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+
+    .fraga-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .fraga-nummer {
+      font-family: 'Fredoka One', cursive;
+      font-size: 3.6rem;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .fraga-typ {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    /* Binary display - read only */
+    .binary-display {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .bit-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .bit-value {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem;
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--surface2);
+      transition: all 0.2s;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .bit-value.on {
+      background: var(--on);
+      color: var(--bg);
+      border-color: var(--on);
+      box-shadow: 0 0 16px rgba(0,229,255,0.5);
+    }
+
+    .bit-value.off {
+      background: var(--surface2);
+      color: var(--muted);
+    }
+
+    .bit-potens {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    /* Decimal input */
+    .decimal-input-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .decimal-input {
+      width: 140px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 2px solid var(--surface2);
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .decimal-input:focus { border-color: var(--on); }
+
+    /* Hjälp-rad: visa värden */
+    .hjalp-rad {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .hjalp-chip {
+      font-size: 0.75rem;
+      background: var(--surface2);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-weight: 700;
+    }
+    .hjalp-chip.on {
+      background: rgba(0,229,255,0.15);
+      color: var(--on);
+    }
+
+    /* Svarsknapp */
+    .btn-svara {
+      background: linear-gradient(135deg, var(--accent), #e07000);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 40px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(255,159,28,0.4);
+      transition: all 0.15s;
+      margin-top: 16px;
+      width: 100%;
+      max-width: 300px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-svara:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,159,28,0.5); }
+    .btn-svara:active { transform: translateY(1px); }
+
+    /* Feedback */
+    .feedback {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      text-align: center;
+      min-height: 2rem;
+      margin-top: 12px;
+      transition: all 0.3s;
+    }
+    .feedback.ratt { color: var(--green); text-shadow: 0 0 16px rgba(87,204,153,0.5); }
+    .feedback.fel  { color: var(--red);   text-shadow: 0 0 16px rgba(255,77,109,0.4); }
+
+    /* Förklaring */
+    .forklaring {
+      background: var(--surface2);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.6;
+      display: none;
+    }
+    .forklaring.synlig { display: block; }
+    .forklaring strong { color: var(--on); }
+
+    /* Nästa knapp */
+    .btn-nasta {
+      background: var(--surface2);
+      color: var(--on);
+      border: 2px solid var(--on);
+      border-radius: 14px;
+      padding: 12px 32px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 12px;
+      display: none;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-nasta.synlig { display: block; }
+    .btn-nasta:hover { background: var(--on); color: var(--bg); }
+
+    /* Progress dots */
+    .progress {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 400px;
+    }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--surface2);
+      transition: background 0.3s;
+    }
+    .dot.ratt  { background: var(--green); }
+    .dot.fel   { background: var(--red); }
+    .dot.aktiv { background: var(--accent); }
+
+    /* Name entry overlay */
+    #namn-overlay {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,10,18,0.97);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      text-align: center;
+      padding: 24px;
+    }
+    #namn-overlay.dold { display: none; }
+
+    .namn-emoji { font-size: 3rem; }
+
+    .namn-rubrik {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      color: var(--on);
+      text-shadow: 0 0 24px rgba(0,229,255,0.5);
+    }
+
+    .namn-under {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: -10px;
+    }
+
+    .namn-input {
+      width: 260px;
+      padding: 14px 18px;
+      border-radius: 16px;
+      border: 2px solid var(--surface2);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.6rem;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .namn-input:focus { border-color: var(--on); }
+
+    .btn-starta-namn {
+      background: linear-gradient(135deg, var(--on), #0099bb);
+      color: var(--bg);
+      border: none;
+      border-radius: 16px;
+      padding: 14px 44px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,229,255,0.4);
+      transition: all 0.15s;
+    }
+    .btn-starta-namn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,229,255,0.5); }
+
+    /* Win overlay */
+    #win-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5,10,18,0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      text-align: center;
+      padding: 28px 16px 32px;
+      overflow-y: auto;
+    }
+    #win-overlay.synlig { display: flex; }
+
+    .win-spelarnamn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.8rem;
+      color: var(--on);
+      text-shadow: 0 0 40px rgba(0,229,255,0.7);
+      animation: namnGlow 1.5s ease infinite alternate;
+    }
+    @keyframes namnGlow {
+      from { text-shadow: 0 0 20px rgba(0,229,255,0.5); }
+      to   { text-shadow: 0 0 60px rgba(0,229,255,1), 0 0 100px rgba(0,229,255,0.4); }
+    }
+
+    .win-emoji { font-size: 3.5rem; animation: bounce 0.8s ease infinite alternate; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+
+    .win-titel {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      color: var(--muted);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .win-score {
+      font-family: 'Fredoka One', cursive;
+      font-size: 5rem;
+      color: var(--green);
+      line-height: 1;
+      text-shadow: 0 0 60px rgba(87,204,153,0.8);
+      animation: glow 1.5s ease infinite alternate;
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 30px rgba(87,204,153,0.5); }
+      to   { text-shadow: 0 0 80px rgba(87,204,153,1); }
+    }
+
+    .win-text { color: var(--muted); font-size: 1rem; }
+
+    /* Question review list */
+    .win-fragor {
+      width: 100%;
+      max-width: 520px;
+      max-height: 40vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+      padding-right: 4px;
+    }
+    .win-fragor::-webkit-scrollbar { width: 4px; }
+    .win-fragor::-webkit-scrollbar-track { background: var(--surface); border-radius: 4px; }
+    .win-fragor::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+
+    .fraga-rad {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 10px 14px;
+      text-align: left;
+      border-left: 4px solid var(--surface2);
+    }
+    .fraga-rad.ratt { border-left-color: var(--green); }
+    .fraga-rad.fel  { border-left-color: var(--red); }
+
+    .fraga-ikon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    .fraga-info { flex: 1; font-size: 0.85rem; line-height: 1.5; }
+    .fraga-info .fraga-q { color: var(--muted); font-size: 0.75rem; }
+    .fraga-info .fraga-ditt { color: var(--text); font-weight: 700; }
+    .fraga-info .fraga-ditt.ratt { color: var(--green); }
+    .fraga-info .fraga-ditt.fel  { color: var(--red); }
+    .fraga-info .fraga-korrekt { color: var(--on); font-size: 0.8rem; }
+
+    .win-rubrik-fragor {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-top: 4px;
+      align-self: flex-start;
+      width: 100%;
+      max-width: 520px;
+      text-align: left;
+    }
+
+    .btn-igen {
+      background: linear-gradient(135deg, var(--green), #2a8a5e);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 40px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 6px 24px rgba(87,204,153,0.4);
+    }
+    .btn-igen:hover { transform: translateY(-3px); }
+  </style>
+</head>
+<body>
+
+<!-- Name entry overlay -->
+<div id="namn-overlay">
+  <div class="namn-emoji">💻</div>
+  <div class="namn-rubrik">Välkommen till Binärspelet!</div>
+  <div class="namn-under">Skriv in ditt namn för att börja</div>
+  <input class="namn-input" id="spelar-namn" type="text" maxlength="20" placeholder="Ditt namn..." onkeydown="namnEnter(event)" autofocus>
+  <button class="btn-starta-namn" onclick="startaMedNamn()">Spela! 🚀</button>
+</div>
+
+<h1>💻 Binärspelet</h1>
+<p class="subtitle">Lär dig omvandla mellan binärt och decimalt!</p>
+
+<div class="scorebar">
+  <div class="score-box">
+    <div class="score-num" id="ratt-num">0</div>
+    <div class="score-lbl">✅ Rätt</div>
+  </div>
+  <div class="score-box">
+    <div class="score-num" id="fel-num">0</div>
+    <div class="score-lbl">❌ Fel</div>
+  </div>
+  <div class="score-box">
+    <div class="score-num" id="fraga-num">1</div>
+    <div class="score-lbl">av 10</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-dec" onclick="byttLage('bin')">Decimal → Binärt</button>
+  <button class="tab" id="tab-bin" onclick="byttLage('dec')">Binärt → Decimal</button>
+</div>
+
+<div class="progress" id="progress"></div>
+
+<div class="card">
+  <div class="fraga-label" id="fraga-label">Fråga</div>
+  <div class="fraga-nummer" id="fraga-nummer">–</div>
+  <div class="fraga-typ" id="fraga-typ"></div>
+
+  <!-- Binärt läge: klickbara bitar (svar) -->
+  <div id="input-binart" style="display:none">
+    <div class="binary-display" id="bit-knappar"></div>
+    <div class="hjalp-rad" id="hjalp-rad-bin"></div>
+  </div>
+
+  <!-- Decimalt läge: visa bitar, svara med siffra -->
+  <div id="input-decimal" style="display:none">
+    <div class="binary-display" id="bit-display"></div>
+    <div class="hjalp-rad" id="hjalp-rad-dec"></div>
+    <div class="decimal-input-wrap">
+      <input class="decimal-input" id="decimal-svar" type="number" min="0" max="255" placeholder="?" onkeydown="enterSvara(event)">
+    </div>
+  </div>
+
+  <button class="btn-svara" id="btn-svara" onclick="svara()">Svara!</button>
+
+  <div class="feedback" id="feedback"></div>
+  <div class="forklaring" id="forklaring"></div>
+  <button class="btn-nasta" id="btn-nasta" onclick="nastaFraga()">Nästa fråga →</button>
+</div>
+
+<!-- Win overlay -->
+<div id="win-overlay">
+  <div class="win-emoji">🏆</div>
+  <div class="win-titel">Grattis!</div>
+  <div class="win-spelarnamn" id="win-spelarnamn">Spelare</div>
+  <div class="win-score" id="win-score">0/10</div>
+  <div class="win-text" id="win-text">Bra jobbat!</div>
+  <div class="win-rubrik-fragor">📋 Alla frågor:</div>
+  <div class="win-fragor" id="win-fragor"></div>
+  <button class="btn-igen" onclick="startaOm()">Spela igen! 💻</button>
+</div>
+
+<script>
+  var lage = "bin"
+  var fragaNr = 0
+  var totalFragor = 10
+  var rattSvar = 0
+  var felSvar = 0
+  var svaratDenna = false
+  var bits = [0,0,0,0,0,0,0,0]
+  var korrektDecimal = 0
+  var korrektBinart = ""
+  var historia = []
+  var spelarNamn = ""
+
+  function namnEnter(e) {
+    if (e.key === "Enter") startaMedNamn()
+  }
+
+  function startaMedNamn() {
+    var val = document.getElementById("spelar-namn").value.trim()
+    spelarNamn = val !== "" ? val : "Spelare"
+    document.getElementById("namn-overlay").classList.add("dold")
+    startaOm()
+  }
+
+  function byttLage(nyttLage) {
+    lage = nyttLage
+    document.getElementById("tab-dec").classList.toggle("active", lage === "bin")
+    document.getElementById("tab-bin").classList.toggle("active", lage === "dec")
+    startaOm()
+  }
+
+  var anvandaNum = []
+
+  function startaOm() {
+    fragaNr = 0
+    rattSvar = 0
+    felSvar = 0
+    historia = []
+    anvandaNum = []
+    document.getElementById("win-overlay").classList.remove("synlig")
+    uppdateraScore()
+    byggProgress()
+    nastaFraga()
+  }
+
+  function byggProgress() {
+    var html = ""
+    for (var i = 0; i < totalFragor; i++) {
+      var klass = "dot"
+      if (historia[i] && historia[i].resultat === "ratt") klass += " ratt"
+      else if (historia[i] && historia[i].resultat === "fel") klass += " fel"
+      else if (i === fragaNr) klass += " aktiv"
+      html += '<div class="' + klass + '"></div>'
+    }
+    document.getElementById("progress").innerHTML = html
+  }
+
+  function slumptal(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min
+  }
+
+  function nastaFraga() {
+    if (fragaNr >= totalFragor) {
+      visaWin()
+      return
+    }
+    svaratDenna = false
+    bits = [0,0,0,0,0,0,0,0]
+
+    document.getElementById("feedback").innerHTML = ""
+    document.getElementById("feedback").className = "feedback"
+    document.getElementById("forklaring").classList.remove("synlig")
+    document.getElementById("btn-nasta").classList.remove("synlig")
+    document.getElementById("btn-svara").style.display = "block"
+
+    var num
+    do { num = slumptal(0, 255) } while (anvandaNum.indexOf(num) !== -1)
+    anvandaNum.push(num)
+    korrektDecimal = num
+    korrektBinart = num.toString(2).padStart(8, "0")
+
+    document.getElementById("fraga-num").innerHTML = fragaNr + 1
+    byggProgress()
+
+    if (lage === "dec") {
+      // Visa binärt, svara decimalt
+      document.getElementById("input-binart").style.display = "none"
+      document.getElementById("input-decimal").style.display = "block"
+      document.getElementById("fraga-label").innerHTML = "Vilket decimaltal är detta?"
+      document.getElementById("fraga-nummer").innerHTML = korrektBinart
+      document.getElementById("fraga-typ").innerHTML = "binärt tal → decimalt"
+      visaBitar(korrektBinart)
+      document.getElementById("decimal-svar").value = ""
+      setTimeout(function() { document.getElementById("decimal-svar").focus() }, 100)
+    } else {
+      // Visa decimalt, svara binärt med knappar
+      document.getElementById("input-decimal").style.display = "none"
+      document.getElementById("input-binart").style.display = "block"
+      document.getElementById("fraga-label").innerHTML = "Vilket binärt tal är detta?"
+      document.getElementById("fraga-nummer").innerHTML = num
+      document.getElementById("fraga-typ").innerHTML = "decimaltal → binärt"
+      byggBitKnappar()
+    }
+  }
+
+  function visaBitar(binStr) {
+    var potensvarden = [128,64,32,16,8,4,2,1]
+    var html = ""
+    var hjalpHtml = ""
+    for (var i = 0; i < 8; i++) {
+      var ar1 = binStr[i] === "1"
+      html += '<div class="bit-block">'
+      html += '<div class="bit-value ' + (ar1 ? "on" : "off") + '">' + binStr[i] + '</div>'
+      html += '<div class="bit-potens">' + potensvarden[i] + '</div>'
+      html += '</div>'
+      if (ar1) {
+        hjalpHtml += '<span class="hjalp-chip on">+' + potensvarden[i] + '</span>'
+      }
+    }
+    document.getElementById("bit-display").innerHTML = html
+    document.getElementById("hjalp-rad-dec").innerHTML = hjalpHtml
+  }
+
+  function byggBitKnappar() {
+    var potensvarden = [128,64,32,16,8,4,2,1]
+    var html = ""
+    for (var i = 0; i < 8; i++) {
+      html += '<div class="bit-block">'
+      html += '<div class="bit-value off" id="bit' + i + '" onclick="vaxlaBit(' + i + ')">' + '0' + '</div>'
+      html += '<div class="bit-potens">' + potensvarden[i] + '</div>'
+      html += '</div>'
+    }
+    document.getElementById("bit-knappar").innerHTML = html
+    document.getElementById("hjalp-rad-bin").innerHTML = ""
+    uppdateraHjalpBin()
+  }
+
+  function vaxlaBit(i) {
+    if (svaratDenna) return
+    bits[i] = bits[i] === 0 ? 1 : 0
+    var el = document.getElementById("bit" + i)
+    el.innerHTML = bits[i]
+    el.className = "bit-value " + (bits[i] === 1 ? "on" : "off")
+    uppdateraHjalpBin()
+  }
+
+  function uppdateraHjalpBin() {
+    var potensvarden = [128,64,32,16,8,4,2,1]
+    var html = ""
+    var summa = 0
+    for (var i = 0; i < 8; i++) {
+      if (bits[i] === 1) {
+        html += '<span class="hjalp-chip on">+' + potensvarden[i] + '</span>'
+        summa += potensvarden[i]
+      }
+    }
+    if (html !== "") {
+      html += '<span class="hjalp-chip">= ' + summa + '</span>'
+    }
+    document.getElementById("hjalp-rad-bin").innerHTML = html
+  }
+
+  function enterSvara(e) {
+    if (e.key === "Enter") svara()
+  }
+
+  function svara() {
+    if (svaratDenna) return
+    svaratDenna = true
+
+    var ratt = false
+    var forklaringText = ""
+    var potensvarden = [128,64,32,16,8,4,2,1]
+
+    if (lage === "dec") {
+      var svar = parseInt(document.getElementById("decimal-svar").value)
+      ratt = svar === korrektDecimal
+
+      // Bygg förklaring
+      var delar = []
+      for (var i = 0; i < 8; i++) {
+        if (korrektBinart[i] === "1") delar.push(potensvarden[i])
+      }
+      forklaringText = "<strong>" + korrektBinart + "</strong> i binärt = "
+      forklaringText += delar.join(" + ") + " = <strong>" + korrektDecimal + "</strong>"
+
+    } else {
+      var svarBin = bits.join("")
+      ratt = svarBin === korrektBinart
+
+      forklaringText = "<strong>" + korrektDecimal + "</strong> i binärt är <strong>" + korrektBinart + "</strong><br>"
+      var delar2 = []
+      for (var j = 0; j < 8; j++) {
+        if (korrektBinart[j] === "1") delar2.push(potensvarden[j])
+      }
+      forklaringText += delar2.join(" + ") + " = " + korrektDecimal
+    }
+
+    var fb = document.getElementById("feedback")
+    var fk = document.getElementById("forklaring")
+
+    if (ratt) {
+      rattSvar++
+      historia[fragaNr] = {
+        resultat: "ratt",
+        fraga: lage === "dec" ? korrektBinart : String(korrektDecimal),
+        typ: lage,
+        dittSvar: lage === "dec" ? String(parseInt(document.getElementById("decimal-svar").value)) : bits.join(""),
+        rattSvar: lage === "dec" ? String(korrektDecimal) : korrektBinart
+      }
+      fb.innerHTML = "✅ Rätt! Bra jobbat!"
+      fb.className = "feedback ratt"
+    } else {
+      felSvar++
+      historia[fragaNr] = {
+        resultat: "fel",
+        fraga: lage === "dec" ? korrektBinart : String(korrektDecimal),
+        typ: lage,
+        dittSvar: lage === "dec" ? String(parseInt(document.getElementById("decimal-svar").value)) : bits.join(""),
+        rattSvar: lage === "dec" ? String(korrektDecimal) : korrektBinart
+      }
+      fb.innerHTML = "❌ Fel! Rätt svar:"
+      fb.className = "feedback fel"
+    }
+
+    fk.innerHTML = forklaringText
+    fk.classList.add("synlig")
+    document.getElementById("btn-svara").style.display = "none"
+    document.getElementById("btn-nasta").classList.add("synlig")
+
+    fragaNr++
+    uppdateraScore()
+    byggProgress()
+  }
+
+  function uppdateraScore() {
+    document.getElementById("ratt-num").innerHTML = rattSvar
+    document.getElementById("fel-num").innerHTML = felSvar
+  }
+
+  function visaWin() {
+    var pct = Math.round(rattSvar / totalFragor * 100)
+    document.getElementById("win-spelarnamn").innerHTML = spelarNamn
+    document.getElementById("win-score").innerHTML = rattSvar + " av " + totalFragor + " rätt"
+    var text = ""
+    if (pct === 100) text = "🌟 Perfekt! Du kan binärt!"
+    else if (pct >= 80) text = "Mycket bra! Nästan perfekt!"
+    else if (pct >= 60) text = "Bra jobbat! Öva lite till!"
+    else text = "Fortsätt öva — du lär dig!"
+    document.getElementById("win-text").innerHTML = text
+
+    // Bygg frågeöversikt
+    var html = ""
+    for (var i = 0; i < historia.length; i++) {
+      var h = historia[i]
+      var ar_ratt = h.resultat === "ratt"
+      var ikon = ar_ratt ? "✅" : "❌"
+      var fragaText = h.typ === "dec"
+        ? "Binärt <strong>" + h.fraga + "</strong> → decimal?"
+        : "Decimal <strong>" + h.fraga + "</strong> → binärt?"
+
+      html += '<div class="fraga-rad ' + h.resultat + '">'
+      html += '<div class="fraga-ikon">' + ikon + '</div>'
+      html += '<div class="fraga-info">'
+      html += '<div class="fraga-q">Fråga ' + (i+1) + ': ' + fragaText + '</div>'
+      if (ar_ratt) {
+        html += '<div class="fraga-ditt ratt">Ditt svar: ' + h.dittSvar + ' ✓</div>'
+      } else {
+        html += '<div class="fraga-ditt fel">Ditt svar: ' + h.dittSvar + ' ✗</div>'
+        html += '<div class="fraga-korrekt">→ Rätt svar: <strong>' + h.rattSvar + '</strong></div>'
+      }
+      html += '</div></div>'
+    }
+    document.getElementById("win-fragor").innerHTML = html
+    document.getElementById("win-overlay").classList.add("synlig")
+  }
+
+  // Starta — vänta på namn först
+  byggProgress()
+</script>
+
+</body>
+</html>

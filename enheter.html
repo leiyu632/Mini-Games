@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Enheter & Prefix</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0e0e16;--card:#161622;--card2:#1e1e2e;--border:#2a2a3e;
+  --text:#e2e8f8;--muted:#6b7280;
+  --kilo:#f59e0b;--hecto:#f97316;--base:#818cf8;
+  --deci:#34d399;--centi:#22d3ee;--milli:#60a5fa;
+  --right:#4ade80;--wrong:#f87171;--accent:#818cf8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);font-family:'Space Grotesk',sans-serif;color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px 60px;
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(129,140,248,.08) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 100%,rgba(52,211,153,.06) 0%,transparent 50%)}
+h1{font-size:2.1rem;font-weight:700;margin-bottom:4px;letter-spacing:-.5px}
+.tagline{color:var(--muted);font-size:.86rem;margin-bottom:22px;text-align:center}
+
+#namn-overlay{display:flex;position:fixed;inset:0;background:rgba(14,14,22,.97);
+  backdrop-filter:blur(10px);z-index:200;flex-direction:column;align-items:center;
+  justify-content:center;gap:18px;text-align:center;padding:24px}
+#namn-overlay.dold{display:none}
+.namn-rubrik{font-size:1.9rem;font-weight:700;color:var(--accent)}
+.namn-under{color:var(--muted);font-size:.88rem}
+.namn-input{width:260px;padding:13px 18px;border-radius:12px;border:2px solid var(--border);
+  background:var(--card);color:var(--text);font-family:'Space Grotesk',sans-serif;
+  font-size:1.3rem;text-align:center;outline:none;transition:border-color .2s}
+.namn-input:focus{border-color:var(--accent)}
+.btn-starta{background:var(--accent);color:#0e0e16;border:none;border-radius:12px;
+  padding:13px 42px;font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;
+  cursor:pointer;box-shadow:0 4px 20px rgba(129,140,248,.35);transition:all .15s}
+.btn-starta:hover{transform:translateY(-2px)}
+
+.scorebar{display:flex;gap:24px;margin-bottom:18px;background:var(--card);
+  border:1px solid var(--border);border-radius:14px;padding:11px 26px}
+.score-box{text-align:center}
+.score-num{font-family:'Space Mono',monospace;font-size:2rem;font-weight:700;line-height:1}
+.score-num.r{color:var(--right)}.score-num.f{color:var(--wrong)}.score-num.n{color:var(--muted)}
+.score-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+.tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--card);
+  border:1px solid var(--border);border-radius:12px;padding:4px;flex-wrap:wrap;justify-content:center}
+.tab{padding:8px 14px;border-radius:8px;border:none;font-family:'Space Grotesk',sans-serif;
+  font-size:.8rem;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);
+  transition:all .2s;white-space:nowrap}
+.tab.active{background:var(--accent);color:#0e0e16}
+
+.progress{display:flex;gap:6px;margin-bottom:18px;justify-content:center;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--border);transition:background .3s}
+.dot.ratt{background:var(--right)}.dot.fel{background:var(--wrong)}.dot.aktiv{background:var(--accent)}
+
+/* PREFIX LADDER */
+.stege-wrap{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:18px 16px;width:100%;max-width:580px;margin-bottom:18px}
+.stege-rubrik{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;
+  margin-bottom:12px;text-align:center}
+.stege{display:flex;justify-content:center;align-items:stretch;border-radius:10px;overflow:hidden}
+.stege-steg{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px;
+  border-right:1px solid rgba(255,255,255,.05);transition:all .3s}
+.stege-steg:last-child{border-right:none}
+.steg-prefix{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;margin-bottom:2px}
+.steg-namn{font-size:.58rem;color:rgba(255,255,255,.5);margin-bottom:4px;text-align:center}
+.steg-faktor{font-family:'Space Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.4);text-align:center}
+
+/* STEPS ARROWS */
+.stege-pilar{display:flex;justify-content:center;align-items:center;margin-top:10px;gap:0}
+.pil-cell{flex:1;text-align:center;font-size:.65rem;color:var(--muted);padding:2px}
+.pil-aktiv{color:var(--accent);font-weight:700}
+
+/* CONVERSION BOX */
+.konv-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0;flex-wrap:wrap}
+.konv-box{background:var(--card2);border:2px solid var(--border);border-radius:12px;
+  padding:12px 18px;text-align:center;min-width:100px}
+.konv-box.from{border-color:var(--accent)}.konv-box.to{border-color:var(--right)}
+.konv-val{font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700}
+.konv-enh{font-size:.75rem;color:var(--muted);margin-top:2px}
+.konv-arrow{display:flex;flex-direction:column;align-items:center;gap:2px}
+.konv-arrow-line{font-size:1.4rem;color:var(--muted)}
+.konv-arrow-text{font-size:.68rem;color:var(--muted);text-align:center;white-space:nowrap}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:22px 20px;width:100%;max-width:580px;box-shadow:0 6px 28px rgba(0,0,0,.3);margin-bottom:14px}
+.fraga-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
+.fraga-text{font-size:1.25rem;font-weight:700;margin-bottom:18px;line-height:1.4}
+.hl-from{color:var(--accent)}.hl-to{color:var(--right)}
+
+.svar-wrap{display:flex;align-items:center;gap:8px}
+.svar-input{width:150px;padding:11px;border-radius:10px;border:2px solid var(--border);
+  background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;
+  font-size:1.4rem;text-align:center;outline:none;transition:border-color .2s}
+.svar-input:focus{border-color:var(--accent)}
+.svar-input.ratt{border-color:var(--right);background:rgba(74,222,128,.07)}
+.svar-input.fel{border-color:var(--wrong);background:rgba(248,113,113,.07)}
+.svar-enhet{font-size:.9rem;color:var(--muted);font-weight:600;font-family:'Space Mono',monospace}
+
+.btn-svara{width:100%;background:var(--accent);color:#0e0e16;border:none;border-radius:11px;
+  padding:13px;font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;
+  cursor:pointer;margin-top:16px;transition:all .15s}
+.btn-svara:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.btn-svara:disabled{opacity:.3;cursor:not-allowed}
+.btn-nasta{width:100%;background:transparent;color:var(--accent);border:2px solid var(--accent);
+  border-radius:11px;padding:11px;font-family:'Space Grotesk',sans-serif;font-size:.95rem;
+  font-weight:700;cursor:pointer;margin-top:10px;display:none;transition:all .15s}
+.btn-nasta.synlig{display:block}
+.btn-nasta:hover{background:var(--accent);color:#0e0e16}
+
+.feedback{font-size:1rem;font-weight:700;min-height:1.4rem;margin-top:10px;text-align:center}
+.feedback.ratt{color:var(--right)}.feedback.fel{color:var(--wrong)}
+
+.forklaring{background:var(--card2);border-radius:10px;padding:14px 16px;margin-top:12px;
+  font-size:.85rem;line-height:1.9;display:none;border-left:3px solid var(--accent)}
+.forklaring.synlig{display:block}
+.forklaring strong{color:var(--text)}
+.fhl{color:var(--accent);font-family:'Space Mono',monospace;font-weight:700}
+.fhl2{color:var(--right);font-family:'Space Mono',monospace;font-weight:700}
+.steg-rad{display:flex;align-items:center;gap:8px;margin:3px 0;flex-wrap:wrap}
+.steg-pil{color:var(--muted);font-size:1.1rem}
+
+#win-overlay{display:none;position:fixed;inset:0;background:rgba(14,14,22,.96);
+  backdrop-filter:blur(10px);z-index:100;flex-direction:column;align-items:center;
+  justify-content:flex-start;gap:10px;padding:28px 16px 40px;overflow-y:auto}
+#win-overlay.synlig{display:flex}
+.win-emoji{font-size:3rem}.win-titel{font-size:.85rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase}
+.win-namn{font-size:2.4rem;font-weight:700;color:var(--accent)}
+.win-score{font-family:'Space Mono',monospace;font-size:1.4rem;font-weight:700}
+.win-text{color:var(--muted);font-size:.88rem}
+.win-rubrik{font-size:.82rem;color:var(--muted);letter-spacing:1px;width:100%;max-width:520px;text-align:left;margin-top:8px}
+.win-lista{width:100%;max-width:520px;display:flex;flex-direction:column;gap:7px}
+.win-rad{display:flex;align-items:flex-start;gap:10px;background:var(--card);border-radius:10px;
+  padding:10px 14px;border-left:4px solid var(--border)}
+.win-rad.ratt{border-left-color:var(--right)}.win-rad.fel{border-left-color:var(--wrong)}
+.win-rad-info{flex:1;font-size:.8rem;line-height:1.6}
+.win-rad-q{color:var(--muted)}
+.win-ditt-ratt{color:var(--right);font-weight:700}.win-ditt-fel{color:var(--wrong);font-weight:700}
+.win-korrekt{color:var(--accent);font-weight:700}
+.btn-igen{background:var(--accent);color:#0e0e16;border:none;border-radius:12px;padding:13px 42px;
+  font-family:'Space Grotesk',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;
+  margin-top:12px;box-shadow:0 4px 20px rgba(129,140,248,.3);transition:all .2s}
+.btn-igen:hover{transform:translateY(-2px)}
+</style>
+</head>
+<body>
+
+<div id="namn-overlay">
+  <div style="font-size:3rem">🔬</div>
+  <div class="namn-rubrik">Enheter & Prefix</div>
+  <div class="namn-under">Lär dig omvandla mellan SI-enheter och prefix</div>
+  <input class="namn-input" id="spelar-namn" type="text" maxlength="20"
+    placeholder="Ditt namn..." onkeydown="if(event.key==='Enter')startaMedNamn()" autofocus>
+  <button class="btn-starta" onclick="startaMedNamn()">Spela! 🚀</button>
+</div>
+
+<h1>🔬 Enheter & Prefix</h1>
+<p class="tagline">Lär dig omvandla med kilo, hekto, (bas), deci, centi och milli</p>
+
+<div class="scorebar">
+  <div class="score-box"><div class="score-num r" id="ratt-num">0</div><div class="score-lbl">✅ Rätt</div></div>
+  <div class="score-box"><div class="score-num f" id="fel-num">0</div><div class="score-lbl">❌ Fel</div></div>
+  <div class="score-box"><div class="score-num n" id="fraga-num">1</div><div class="score-lbl">av 10</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" id="tab-0" onclick="byttLage(0)">📏 Längd</button>
+  <button class="tab" id="tab-1" onclick="byttLage(1)">⚖️ Massa</button>
+  <button class="tab" id="tab-2" onclick="byttLage(2)">🧪 Volym</button>
+  <button class="tab" id="tab-3" onclick="byttLage(3)">🔀 Blandat</button>
+</div>
+
+<div class="progress" id="progress"></div>
+
+<div class="stege-wrap">
+  <div class="stege-rubrik">Prefixstegen</div>
+  <div class="stege" id="stege"></div>
+  <div id="pil-rad"></div>
+</div>
+
+<div class="card">
+  <div class="fraga-label" id="fraga-label">Fråga 1 av 10</div>
+  <div id="konv-vis"></div>
+  <div class="fraga-text" id="fraga-text"></div>
+  <div id="input-area"></div>
+  <div class="feedback"   id="feedback"></div>
+  <div class="forklaring" id="forklaring"></div>
+  <button class="btn-svara" id="btn-svara" onclick="svara()">Svara!</button>
+  <button class="btn-nasta" id="btn-nasta" onclick="nastaFraga()">Nästa fråga →</button>
+</div>
+
+<div id="win-overlay">
+  <div class="win-emoji">🏆</div>
+  <div class="win-titel">Grattis!</div>
+  <div class="win-namn"  id="win-namn"></div>
+  <div class="win-score" id="win-score"></div>
+  <div class="win-text"  id="win-text"></div>
+  <div class="win-rubrik">📋 Alla frågor:</div>
+  <div class="win-lista" id="win-lista"></div>
+  <button class="btn-igen" onclick="startaOm()">Spela igen! 🔬</button>
+</div>
+
+<script>
+var spelarNamn = ""
+var lage = 0
+var fragaNr = 0
+var totalFragor = 10
+var rattSvar = 0
+var felSvar = 0
+var svaratDenna = false
+var historia = []
+var anvandaFragor = []
+var q = {}
+
+// PREFIXER: index-based, consecutive — exp just for display
+// Gap between hekto(1) and bas(2) = ×100, but we treat each step as ×10 in the ladder
+// Prefix lists per category
+var PREFIXER_LANGD = [
+  { prefix:"mil", namn:"mil",   faktor:10000, farg:"#e879f9" },
+  { prefix:"k",   namn:"kilo",  faktor:1000,  farg:"#f59e0b" },
+  { prefix:"h",   namn:"hekto", faktor:100,   farg:"#f97316" },
+  { prefix:"",    namn:"bas",   faktor:1,     farg:"#818cf8" },
+  { prefix:"d",   namn:"deci",  faktor:0.1,   farg:"#34d399" },
+  { prefix:"c",   namn:"centi", faktor:0.01,  farg:"#22d3ee" },
+  { prefix:"m",   namn:"milli", faktor:0.001, farg:"#60a5fa" },
+]
+var PREFIXER_MASSA_VOLYM = [
+  { prefix:"k",  namn:"kilo",  faktor:1000,  farg:"#f59e0b" },
+  { prefix:"h",  namn:"hekto", faktor:100,   farg:"#f97316" },
+  { prefix:"",   namn:"bas",   faktor:1,     farg:"#818cf8" },
+  { prefix:"d",  namn:"deci",  faktor:0.1,   farg:"#34d399" },
+  { prefix:"c",  namn:"centi", faktor:0.01,  farg:"#22d3ee" },
+  { prefix:"m",  namn:"milli", faktor:0.001, farg:"#60a5fa" },
+]
+var PREFIXER = PREFIXER_MASSA_VOLYM  // default, overwritten per question
+
+var KATEGORIER = [
+  { namn:"Längd", bas:"m", enhet:"meter", prefixer: null },  // set after PREFIXER_LANGD defined
+  { namn:"Massa", bas:"g", enhet:"gram",  prefixer: null },
+  { namn:"Volym", bas:"l", enhet:"liter", prefixer: null },
+]
+// Assign after declaration
+KATEGORIER[0].prefixer = PREFIXER_LANGD
+KATEGORIER[1].prefixer = PREFIXER_MASSA_VOLYM
+KATEGORIER[2].prefixer = PREFIXER_MASSA_VOLYM
+
+function slump(min,max){ return Math.floor(Math.random()*(max-min+1))+min }
+function slumpArr(arr) { return arr[Math.floor(Math.random()*arr.length)] }
+
+function fmt(n) {
+  // Clean number display: avoid floating point junk
+  var s = parseFloat(n.toPrecision(10))
+  // If integer, show as integer
+  if (s === Math.round(s)) return String(Math.round(s))
+  return String(s)
+}
+
+function enhetNamn(idx, bas) {
+  var p = PREFIXER[idx]
+  if (p.prefix === "mil") return "mil"   // mil is standalone, not "milm"
+  return p.prefix + bas
+}
+
+function startaMedNamn() {
+  var val = document.getElementById("spelar-namn").value.trim()
+  spelarNamn = val !== "" ? val : "Spelare"
+  document.getElementById("namn-overlay").classList.add("dold")
+  startaOm()
+}
+
+function byttLage(n) {
+  lage = n
+  for (var i=0;i<4;i++)
+    document.getElementById("tab-"+i).classList.toggle("active", i===n)
+  startaOm()
+}
+
+function startaOm() {
+  fragaNr=0; rattSvar=0; felSvar=0; historia=[]; anvandaFragor=[]
+  document.getElementById("win-overlay").classList.remove("synlig")
+  uppdateraScore(); byggProgress(); nastaFraga()
+}
+
+function genKat() {
+  return lage===3 ? KATEGORIER[slump(0,2)] : KATEGORIER[lage]
+}
+
+function nastaFraga() {
+  if (fragaNr >= totalFragor) { visaWin(); return }
+  svaratDenna = false
+  document.getElementById("feedback").innerHTML = ""
+  document.getElementById("feedback").className = "feedback"
+  document.getElementById("forklaring").classList.remove("synlig")
+  document.getElementById("btn-nasta").classList.remove("synlig")
+  document.getElementById("btn-svara").style.display = "block"
+  document.getElementById("btn-svara").disabled = false
+  document.getElementById("fraga-num").innerHTML = fragaNr + 1
+  document.getElementById("fraga-label").innerHTML = "Fråga "+(fragaNr+1)+" av "+totalFragor
+
+  genFraga()
+  byggProgress()
+  renderFraga()
+}
+
+function genFraga() {
+  var kat = genKat()
+  PREFIXER = kat.prefixer  // set global for byggStege etc.
+
+  var fromIdx, toIdx
+  do {
+    fromIdx = slump(0, PREFIXER.length-1)
+    toIdx   = slump(0, PREFIXER.length-1)
+  } while (fromIdx === toIdx || Math.abs(fromIdx-toIdx) > 3)
+
+  var fromFaktor = PREFIXER[fromIdx].faktor
+  var toFaktor   = PREFIXER[toIdx].faktor
+  var ratio = fromFaktor / toFaktor
+
+  var niceVals = [1,2,5,10,20,25,50,100,200,500,0.5,0.1,0.2,0.25]
+  var fromVal, toVal, tries=0, key
+  do {
+    fromVal = slumpArr(niceVals)
+    toVal = fromVal * ratio
+    toVal = parseFloat(toVal.toPrecision(10))
+    key = kat.bas+"_"+fromIdx+"_"+toIdx+"_"+fromVal
+    tries++
+  } while ((toVal<=0 || toVal!==parseFloat(toVal.toPrecision(6)) || anvandaFragor.indexOf(key)!==-1) && tries<500)
+  anvandaFragor.push(key)
+
+  q = {
+    kat: kat,
+    fromIdx: fromIdx,
+    toIdx: toIdx,
+    fromVal: fromVal,
+    toVal: toVal,
+    fromEnhet: enhetNamn(fromIdx, kat.bas),
+    toEnhet: enhetNamn(toIdx, kat.bas),
+    korrekt: toVal
+  }
+}
+
+function byggStege() {
+  var html = ""
+  for (var i=0; i<PREFIXER.length; i++) {
+    var p = PREFIXER[i]
+    var isFrom = (i === q.fromIdx)
+    var isTo   = (i === q.toIdx)
+    var isHL   = isFrom || isTo
+    var bg     = isFrom ? p.farg : isTo ? "#4ade80" : "transparent"
+    var txtCol = isHL ? "#0e0e16" : "#555"
+    var op     = isHL ? "1" : "0.4"
+    html += '<div class="stege-steg" style="background:'+bg+';opacity:'+op+'">'
+    html += '<div class="steg-prefix" style="color:'+txtCol+'">'+(p.prefix||"–")+'</div>'
+    html += '<div class="steg-namn">'+(isFrom||isTo ? (p.prefix?p.prefix+q.kat.bas:q.kat.bas) : p.namn)+'</div>'
+    html += '<div class="steg-faktor">×'+p.faktor+'</div>'
+    html += '</div>'
+  }
+  document.getElementById("stege").innerHTML = html
+
+  // Arrow row showing ×10 / ×100 between each step
+  var steps = toIdx2fromDir()
+  var pilHtml = '<div style="display:flex;margin-top:8px;font-size:.62rem;color:var(--muted);text-align:center">'
+  for (var j=0; j<PREFIXER.length; j++) {
+    pilHtml += '<div style="flex:1">'
+    if (j < PREFIXER.length-1) {
+      var f1 = PREFIXER[j].faktor
+      var f2 = PREFIXER[j+1].faktor
+      var mult = Math.round(f1/f2)
+      var isActive = (Math.min(q.fromIdx,q.toIdx)<=j && j<Math.max(q.fromIdx,q.toIdx))
+      pilHtml += '</div><div style="flex:.6;color:'+(isActive?"var(--accent)":"var(--muted)")+
+        ';font-weight:'+(isActive?"700":"400")+'">÷'+mult+'<br>→</div>'
+    } else {
+      pilHtml += '</div>'
+    }
+  }
+  pilHtml += '</div>'
+  document.getElementById("pil-rad").innerHTML = pilHtml
+}
+
+function toIdx2fromDir() { return q.toIdx > q.fromIdx ? 1 : -1 }
+
+function renderFraga() {
+  byggStege()
+
+  var html =
+    '<div class="konv-wrap">'+
+    '<div class="konv-box from"><div class="konv-val hl-from">'+fmt(q.fromVal)+'</div><div class="konv-enh">'+q.fromEnhet+'</div></div>'+
+    '<div class="konv-arrow"><div class="konv-arrow-line">→</div></div>'+
+    '<div class="konv-box to"><div class="konv-val hl-to">?</div><div class="konv-enh">'+q.toEnhet+'</div></div>'+
+    '</div>'
+  document.getElementById("konv-vis").innerHTML = html
+
+  document.getElementById("fraga-text").innerHTML =
+    'Omvandla <span class="hl-from">'+fmt(q.fromVal)+' '+q.fromEnhet+'</span> till <span class="hl-to">'+q.toEnhet+'</span>:'
+
+  document.getElementById("input-area").innerHTML =
+    '<div class="svar-wrap">'+
+    '<input class="svar-input" id="svar-input" type="number" step="any" placeholder="?" onkeydown="if(event.key===\'Enter\')svara()">'+
+    '<span class="svar-enhet">'+q.toEnhet+'</span>'+
+    '</div>'
+
+  setTimeout(function(){ var inp=document.getElementById("svar-input"); if(inp) inp.focus() }, 80)
+}
+
+function riktningText() {
+  var fromF = PREFIXER[q.fromIdx].faktor
+  var toF   = PREFIXER[q.toIdx].faktor
+  var ratio = fromF / toF
+  return ratio > 1 ? "×"+Math.round(ratio) : "÷"+Math.round(1/ratio)
+}
+
+function svara() {
+  if (svaratDenna) return
+  var inp = document.getElementById("svar-input")
+  if (!inp || inp.value==="") return
+  svaratDenna = true
+
+  var val = parseFloat(inp.value)
+  var ratt = Math.abs(val - q.korrekt) < 1e-9
+  inp.disabled = true
+  inp.classList.add(ratt?"ratt":"fel")
+
+  // Update konv-vis with answer
+  document.getElementById("konv-vis").innerHTML =
+    '<div class="konv-wrap">'+
+    '<div class="konv-box from"><div class="konv-val hl-from">'+fmt(q.fromVal)+'</div><div class="konv-enh">'+q.fromEnhet+'</div></div>'+
+    '<div class="konv-arrow"><div class="konv-arrow-line">→</div></div>'+
+    '<div class="konv-box to" style="border-color:'+(ratt?"var(--right)":"var(--wrong)")+'">'+
+    '<div class="konv-val" style="color:'+(ratt?"var(--right)":"var(--wrong)")+'">'+fmt(q.korrekt)+'</div>'+
+    '<div class="konv-enh">'+q.toEnhet+'</div>'+
+    '</div></div>'
+
+  document.getElementById("forklaring").innerHTML = byggForklaring()
+  document.getElementById("forklaring").classList.add("synlig")
+
+  var fb = document.getElementById("feedback")
+  if (ratt) {
+    rattSvar++
+    historia[fragaNr] = { resultat:"ratt", fraga:byggFragaTxt(), dittSvar:fmt(val)+" "+q.toEnhet, ratt:fmt(q.korrekt)+" "+q.toEnhet }
+    fb.innerHTML = "✅ Rätt!"; fb.className = "feedback ratt"
+  } else {
+    felSvar++
+    historia[fragaNr] = { resultat:"fel", fraga:byggFragaTxt(), dittSvar:fmt(val)+" "+q.toEnhet, ratt:fmt(q.korrekt)+" "+q.toEnhet }
+    fb.innerHTML = "❌ Fel! Rätt svar: "+fmt(q.korrekt)+" "+q.toEnhet; fb.className = "feedback fel"
+  }
+
+  document.getElementById("btn-svara").style.display = "none"
+  document.getElementById("btn-nasta").classList.add("synlig")
+  fragaNr++; uppdateraScore(); byggProgress()
+}
+
+function byggForklaring() {
+  var fromF = PREFIXER[q.fromIdx].faktor
+  var toF   = PREFIXER[q.toIdx].faktor
+  var ratio = fromF / toF
+  var dir   = ratio >= 1 ? "×"+Math.round(ratio) : "÷"+Math.round(1/ratio)
+  var dirText = toF < fromF
+    ? "Byter till en <strong>mindre</strong> enhet → multiplicera"
+    : "Byter till en <strong>större</strong> enhet → dividera"
+
+  var html = dirText + '<br>'
+
+  // Step through each index between from and to
+  var step = q.toIdx > q.fromIdx ? 1 : -1
+  var cur = q.fromVal
+  for (var i = q.fromIdx; i !== q.toIdx; i += step) {
+    var nextI = i + step
+    var f1 = PREFIXER[i].faktor
+    var f2 = PREFIXER[nextI].faktor
+    var mult = f1/f2
+    var multStr = mult >= 1 ? "×"+Math.round(mult) : "÷"+Math.round(1/mult)
+    var next = parseFloat((cur * mult).toPrecision(10))
+    html += '<div class="steg-rad">'
+    html += '<span class="fhl">'+fmt(cur)+'&thinsp;'+enhetNamn(i, q.kat.bas)+'</span>'
+    html += '<span class="steg-pil">'+multStr+'</span>'
+    html += '<span style="color:var(--muted)">=</span>'
+    html += '<span class="fhl2">'+fmt(next)+'&thinsp;'+enhetNamn(nextI, q.kat.bas)+'</span>'
+    html += '</div>'
+    cur = next
+  }
+
+  html += '<br><strong>Svar:</strong> <span class="fhl">'+fmt(q.fromVal)+' '+q.fromEnhet+'</span>'
+  html += ' = <span class="fhl2">'+fmt(q.korrekt)+' '+q.toEnhet+'</span>'
+  html += ' &nbsp;<span style="color:var(--muted);font-size:.8rem">('+dir+')</span>'
+  return html
+}
+
+function byggFragaTxt() {
+  return fmt(q.fromVal)+' '+q.fromEnhet+' → '+q.toEnhet
+}
+
+function uppdateraScore() {
+  document.getElementById("ratt-num").innerHTML = rattSvar
+  document.getElementById("fel-num").innerHTML  = felSvar
+}
+
+function byggProgress() {
+  var html = ""
+  for (var i=0;i<totalFragor;i++) {
+    var k="dot"
+    if (historia[i]&&historia[i].resultat==="ratt") k+=" ratt"
+    else if (historia[i]&&historia[i].resultat==="fel") k+=" fel"
+    else if (i===fragaNr) k+=" aktiv"
+    html += '<div class="'+k+'"></div>'
+  }
+  document.getElementById("progress").innerHTML = html
+}
+
+function visaWin() {
+  var pct = Math.round(rattSvar/totalFragor*100)
+  document.getElementById("win-namn").innerHTML  = spelarNamn
+  document.getElementById("win-score").innerHTML = rattSvar+" av "+totalFragor+" rätt ("+pct+"%)"
+  var t = pct===100?"🌟 Perfekt! Du behärskar alla prefix!":pct>=80?"Mycket bra!":pct>=60?"Bra, öva lite till!":"Fortsätt öva!"
+  document.getElementById("win-text").innerHTML = t
+  var html=""
+  for (var i=0;i<historia.length;i++){
+    var h=historia[i], ar=h.resultat==="ratt"
+    html+='<div class="win-rad '+h.resultat+'"><div>'+(ar?"✅":"❌")+'</div>'
+    html+='<div class="win-rad-info"><div class="win-rad-q">Fråga '+(i+1)+': '+h.fraga+'</div>'
+    if(ar) html+='<div class="win-ditt-ratt">'+h.ratt+' ✓</div>'
+    else html+='<div class="win-ditt-fel">'+h.dittSvar+' ✗</div><div class="win-korrekt">→ '+h.ratt+'</div>'
+    html+='</div></div>'
+  }
+  document.getElementById("win-lista").innerHTML = html
+  document.getElementById("win-overlay").classList.add("synlig")
+}
+
+byggProgress()
+</script>
+</body>
+</html>

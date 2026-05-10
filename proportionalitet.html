@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Proportionalitet</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1923;
+  --card: #1a2535;
+  --card2: #222f42;
+  --border: #2d3f58;
+  --accent: #f7c948;
+  --accent2: #41c9a0;
+  --accent3: #ff7b54;
+  --text: #e8f0fc;
+  --muted: #6b82a8;
+  --right: #41c9a0;
+  --wrong: #ff5b6e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 16px 56px;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, #1a2f4a 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, #0d1f14 0%, transparent 50%);
+}
+h1 {
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: 2.2rem; font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(247,201,72,0.3);
+  margin-bottom: 4px; letter-spacing: -0.5px;
+}
+.tagline { color: var(--muted); font-size: 0.88rem; margin-bottom: 24px; text-align: center; }
+
+/* Name overlay */
+#namn-overlay {
+  display: flex; position: fixed; inset: 0;
+  background: rgba(15,25,35,0.97); backdrop-filter: blur(10px);
+  z-index: 200; flex-direction: column; align-items: center;
+  justify-content: center; gap: 18px; text-align: center; padding: 24px;
+}
+#namn-overlay.dold { display: none; }
+.namn-rubrik {
+  font-family: 'Lexend Deca', sans-serif;
+  font-size: 2rem; font-weight: 900; color: var(--accent);
+}
+.namn-under { color: var(--muted); font-size: 0.9rem; margin-top: -8px; }
+.namn-input {
+  width: 260px; padding: 14px 18px; border-radius: 14px;
+  border: 2px solid var(--border); background: var(--card);
+  color: var(--text); font-family: 'Lexend Deca', sans-serif;
+  font-size: 1.4rem; text-align: center; outline: none;
+  transition: border-color 0.2s;
+}
+.namn-input:focus { border-color: var(--accent); }
+.btn-starta {
+  background: var(--accent); color: #0f1923; border: none;
+  border-radius: 14px; padding: 14px 44px;
+  font-family: 'Lexend Deca', sans-serif; font-size: 1.1rem; font-weight: 800;
+  cursor: pointer; box-shadow: 0 4px 20px rgba(247,201,72,0.35);
+  transition: all 0.15s;
+}
+.btn-starta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(247,201,72,0.5); }
+
+/* Score bar */
+.scorebar {
+  display: flex; gap: 24px; margin-bottom: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 12px 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.score-box { text-align: center; }
+.score-num { font-family: 'Lexend Deca', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; }
+.score-num.r { color: var(--right); }
+.score-num.f { color: var(--wrong); }
+.score-num.n { color: var(--muted); }
+.score-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 5px; margin-bottom: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 4px; flex-wrap: wrap; justify-content: center;
+}
+.tab {
+  padding: 8px 14px; border-radius: 10px; border: none;
+  font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; background: transparent; color: var(--muted);
+  transition: all 0.2s; white-space: nowrap;
+}
+.tab.active { background: var(--accent); color: #0f1923; font-weight: 800; }
+
+/* Progress */
+.progress { display: flex; gap: 6px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+.dot.ratt { background: var(--right); }
+.dot.fel  { background: var(--wrong); }
+.dot.aktiv { background: var(--accent); }
+
+/* Card */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 22px; padding: 26px 22px; width: 100%; max-width: 580px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35); margin-bottom: 16px;
+}
+.fraga-label {
+  font-size: 0.7rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;
+}
+
+/* Scenario */
+.scenario-box {
+  background: var(--card2); border-radius: 14px; padding: 16px;
+  margin-bottom: 20px; border: 1px solid var(--border);
+}
+.scenario-emoji { font-size: 2rem; margin-bottom: 6px; }
+.scenario-text  { font-size: 1rem; line-height: 1.6; color: var(--text); }
+.scenario-text strong { color: var(--accent); }
+.scenario-text .accent2 { color: var(--accent2); }
+.scenario-text .accent3 { color: var(--accent3); }
+
+/* Proportions table */
+.prop-table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  margin-bottom: 20px; border-radius: 12px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.prop-table th {
+  background: var(--card2); padding: 10px 14px;
+  font-family: 'Lexend Deca', sans-serif; font-size: 0.78rem;
+  font-weight: 700; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 1px; text-align: center;
+}
+.prop-table td {
+  padding: 12px 14px; text-align: center; font-size: 1.1rem;
+  font-weight: 600; border-top: 1px solid var(--border);
+  background: var(--card);
+}
+.prop-table td.okand {
+  color: var(--accent); font-family: 'Lexend Deca', sans-serif;
+  font-size: 1.4rem; font-weight: 900;
+}
+.prop-table td.kand { color: var(--text); }
+
+/* Visualisation: dot rows */
+.vis-grid-wrap { margin-bottom: 20px; }
+.vis-grid-label {
+  font-size: 0.72rem; color: var(--muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+}
+.vis-rows { display: flex; flex-direction: column; gap: 6px; }
+.vis-row  { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.vis-row-label {
+  font-size: 0.78rem; color: var(--muted); font-weight: 600;
+  min-width: 80px; text-align: right;
+}
+.vis-dot {
+  width: 18px; height: 18px; border-radius: 4px;
+  background: var(--accent2); opacity: 0.85;
+  animation: popIn 0.2s ease both;
+}
+@keyframes popIn {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 0.85; }
+}
+.vis-dot.row2 { background: var(--accent3); }
+.vis-dot.row3 { background: var(--accent); }
+
+/* Graph */
+.graph-wrap { margin-bottom: 20px; }
+.graph-label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.graph-svg   { width: 100%; border-radius: 10px; background: var(--card2); border: 1px solid var(--border); display: block; }
+
+/* Input */
+.svar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.svar-input {
+  width: 120px; padding: 12px; border-radius: 12px;
+  border: 2px solid var(--border); background: var(--bg);
+  color: var(--text); font-family: 'Lexend Deca', sans-serif;
+  font-size: 1.5rem; text-align: center; outline: none;
+  transition: border-color 0.2s;
+}
+.svar-input:focus { border-color: var(--accent); }
+.svar-input.ratt  { border-color: var(--right);  background: rgba(65,201,160,0.08); }
+.svar-input.fel   { border-color: var(--wrong); background: rgba(255,91,110,0.08); }
+.svar-enhet { color: var(--muted); font-size: 0.9rem; font-weight: 600; }
+
+/* Buttons */
+.btn-svara {
+  width: 100%; background: var(--accent); color: #0f1923;
+  border: none; border-radius: 13px; padding: 14px;
+  font-family: 'Lexend Deca', sans-serif; font-size: 1.1rem; font-weight: 800;
+  cursor: pointer; margin-top: 16px; transition: all 0.15s;
+}
+.btn-svara:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(247,201,72,0.4); }
+.btn-svara:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-nasta {
+  width: 100%; background: transparent; color: var(--accent);
+  border: 2px solid var(--accent); border-radius: 13px; padding: 12px;
+  font-family: 'Lexend Deca', sans-serif; font-size: 1rem; font-weight: 700;
+  cursor: pointer; margin-top: 10px; display: none; transition: all 0.15s;
+}
+.btn-nasta.synlig { display: block; }
+.btn-nasta:hover  { background: var(--accent); color: #0f1923; }
+
+/* Feedback */
+.feedback {
+  font-family: 'Lexend Deca', sans-serif; font-size: 1.1rem; font-weight: 700;
+  min-height: 1.4rem; margin-top: 10px; text-align: center;
+}
+.feedback.ratt { color: var(--right); }
+.feedback.fel  { color: var(--wrong); }
+
+/* Explanation */
+.forklaring {
+  background: var(--card2); border-radius: 12px;
+  padding: 14px 16px; margin-top: 12px;
+  font-size: 0.86rem; line-height: 1.8; color: var(--muted);
+  display: none; border-left: 3px solid var(--accent2);
+}
+.forklaring.synlig { display: block; }
+.forklaring strong { color: var(--text); }
+.forklaring .hl { color: var(--accent); font-weight: 700; }
+.forklaring .hl2 { color: var(--accent2); font-weight: 700; }
+
+/* Win overlay */
+#win-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,25,35,0.96); backdrop-filter: blur(10px);
+  z-index: 100; flex-direction: column; align-items: center;
+  justify-content: flex-start; gap: 10px;
+  padding: 28px 16px 40px; overflow-y: auto;
+}
+#win-overlay.synlig { display: flex; }
+.win-emoji { font-size: 3rem; }
+.win-titel { font-family: 'Lexend Deca', sans-serif; font-size: 0.9rem; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; }
+.win-namn  { font-family: 'Lexend Deca', sans-serif; font-size: 2.6rem; font-weight: 900; color: var(--accent); }
+.win-score { font-family: 'Lexend Deca', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+.win-text  { color: var(--muted); font-size: 0.9rem; }
+.win-rubrik { font-family: 'Lexend Deca', sans-serif; font-size: 0.85rem; color: var(--muted); letter-spacing: 1px; width: 100%; max-width: 520px; text-align: left; margin-top: 8px; }
+.win-lista  { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 7px; }
+.win-rad { display: flex; align-items: flex-start; gap: 10px; background: var(--card); border-radius: 12px; padding: 10px 14px; border-left: 4px solid var(--border); }
+.win-rad.ratt { border-left-color: var(--right); }
+.win-rad.fel  { border-left-color: var(--wrong); }
+.win-rad-info { flex: 1; font-size: 0.82rem; line-height: 1.6; }
+.win-rad-q    { color: var(--muted); }
+.win-ditt-ratt { color: var(--right); font-weight: 700; }
+.win-ditt-fel  { color: var(--wrong); font-weight: 700; }
+.win-korrekt   { color: var(--accent2); font-weight: 700; }
+.btn-igen {
+  background: var(--accent); color: #0f1923; border: none;
+  border-radius: 14px; padding: 14px 44px;
+  font-family: 'Lexend Deca', sans-serif; font-size: 1.1rem; font-weight: 800;
+  cursor: pointer; margin-top: 12px;
+  box-shadow: 0 4px 20px rgba(247,201,72,0.35); transition: all 0.2s;
+}
+.btn-igen:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<!-- Name overlay -->
+<div id="namn-overlay">
+  <div style="font-size:3rem">⚖️</div>
+  <div class="namn-rubrik">Proportionalitet!</div>
+  <div class="namn-under">Lär dig om proportionella samband</div>
+  <input class="namn-input" id="spelar-namn" type="text" maxlength="20"
+    placeholder="Ditt namn..." onkeydown="if(event.key==='Enter')startaMedNamn()" autofocus>
+  <button class="btn-starta" onclick="startaMedNamn()">Spela! 🚀</button>
+</div>
+
+<h1>⚖️ Proportionalitet</h1>
+<p class="tagline">Lär dig hitta och använda proportionella samband</p>
+
+<!-- Score -->
+<div class="scorebar">
+  <div class="score-box"><div class="score-num r" id="ratt-num">0</div><div class="score-lbl">✅ Rätt</div></div>
+  <div class="score-box"><div class="score-num f" id="fel-num">0</div><div class="score-lbl">❌ Fel</div></div>
+  <div class="score-box"><div class="score-num n" id="fraga-num">1</div><div class="score-lbl">av 10</div></div>
+</div>
+
+<!-- Mode tabs -->
+<div class="tabs">
+  <button class="tab active" id="tab-0" onclick="byttLage(0)">🛒 Hitta värdet</button>
+  <button class="tab"        id="tab-1" onclick="byttLage(1)">📐 Konstantfaktor</button>
+  <button class="tab"        id="tab-2" onclick="byttLage(2)">✅ Proportionellt?</button>
+</div>
+
+<div class="progress" id="progress"></div>
+
+<!-- Card -->
+<div class="card">
+  <div class="fraga-label" id="fraga-label">Fråga 1 av 10</div>
+  <div class="scenario-box" id="scenario-box"></div>
+  <div id="vis-area"></div>
+  <div id="tabell-area"></div>
+  <div id="graf-area"></div>
+  <div id="input-area"></div>
+  <div class="feedback"   id="feedback"></div>
+  <div class="forklaring" id="forklaring"></div>
+  <button class="btn-svara" id="btn-svara" onclick="svara()">Svara!</button>
+  <button class="btn-nasta" id="btn-nasta" onclick="nastaFraga()">Nästa fråga →</button>
+</div>
+
+<!-- Win overlay -->
+<div id="win-overlay">
+  <div class="win-emoji">🏆</div>
+  <div class="win-titel">Grattis!</div>
+  <div class="win-namn"  id="win-namn"></div>
+  <div class="win-score" id="win-score"></div>
+  <div class="win-text"  id="win-text"></div>
+  <div class="win-rubrik">📋 Alla frågor:</div>
+  <div class="win-lista" id="win-lista"></div>
+  <button class="btn-igen" onclick="startaOm()">Spela igen! ⚖️</button>
+</div>
+
+<script>
+var spelarNamn = ""
+var lage = 0
+var fragaNr = 0
+var totalFragor = 10
+var rattSvar = 0
+var felSvar = 0
+var svaratDenna = false
+var historia = []
+var anvandaFragor = []
+var q = {}
+
+// Scenarios for proportional problems
+var scenarios = [
+  { emoji:"🍎", enhet1:"äpplen",  enhet2:"kr",    k_min:3,  k_max:8,   verb:"kostar" },
+  { emoji:"⛽", enhet1:"liter",   enhet2:"kr",    k_min:15, k_max:25,  verb:"kostar" },
+  { emoji:"🚗", enhet1:"mil",     enhet2:"liter", k_min:1,  k_max:5,   verb:"förbrukar" },
+  { emoji:"🍕", enhet1:"pizzor",  enhet2:"kr",    k_min:80, k_max:150, verb:"kostar" },
+  { emoji:"📏", enhet1:"meter",   enhet2:"kr",    k_min:12, k_max:40,  verb:"kostar" },
+  { emoji:"🧃", enhet1:"flaskor", enhet2:"kr",    k_min:10, k_max:20,  verb:"kostar" },
+  { emoji:"🏃", enhet1:"minuter", enhet2:"meter", k_min:50, k_max:200, verb:"ger" },
+  { emoji:"🎨", enhet1:"tavlor",  enhet2:"kr",    k_min:200,k_max:500, verb:"kostar" },
+]
+
+// Non-proportional scenarios (for mode 2)
+var ejPropScenarios = [
+  { emoji:"🌡️", text:"Temperatur (°C) och årstid (månad)", ejProp: true },
+  { emoji:"📚", text:"Sidnummer och tid att läsa (inte konstant takt)", ejProp: true },
+  { emoji:"🎂", text:"Ålder och längd (växer inte lika snabbt hela livet)", ejProp: true },
+]
+
+function slump(min, max) { return Math.floor(Math.random()*( max-min+1))+min }
+function slumpArr(arr)   { return arr[Math.floor(Math.random()*arr.length)] }
+
+function startaMedNamn() {
+  var val = document.getElementById("spelar-namn").value.trim()
+  spelarNamn = val !== "" ? val : "Spelare"
+  document.getElementById("namn-overlay").classList.add("dold")
+  startaOm()
+}
+
+function byttLage(n) {
+  lage = n
+  for (var i=0;i<3;i++)
+    document.getElementById("tab-"+i).classList.toggle("active", i===n)
+  startaOm()
+}
+
+function startaOm() {
+  fragaNr=0; rattSvar=0; felSvar=0; historia=[]; anvandaFragor=[]
+  document.getElementById("win-overlay").classList.remove("synlig")
+  uppdateraScore(); byggProgress(); nastaFraga()
+}
+
+function nastaFraga() {
+  if (fragaNr >= totalFragor) { visaWin(); return }
+  svaratDenna = false
+  document.getElementById("feedback").innerHTML = ""
+  document.getElementById("feedback").className = "feedback"
+  document.getElementById("forklaring").classList.remove("synlig")
+  document.getElementById("btn-nasta").classList.remove("synlig")
+  document.getElementById("btn-svara").style.display = "block"
+  document.getElementById("btn-svara").disabled = false
+  document.getElementById("fraga-num").innerHTML = fragaNr + 1
+  document.getElementById("fraga-label").innerHTML = "Fråga "+(fragaNr+1)+" av "+totalFragor
+
+  genFraga()
+  byggProgress()
+  renderFraga()
+}
+
+function genFraga() {
+  if (lage === 0) {
+    // Hitta saknat värde: given ratio a/b = c/?, find ?
+    var sc = slumpArr(scenarios)
+    var k = slump(sc.k_min, sc.k_max)
+    var x1 = slump(1,8)
+    var x2 = slump(1,8)
+    while (x2===x1) x2=slump(1,8)
+    q = { typ:0, sc:sc, k:k, x1:x1, y1:x1*k, x2:x2, korrekt:x2*k }
+
+  } else if (lage === 1) {
+    // Find the constant of proportionality k = y/x
+    var sc = slumpArr(scenarios)
+    var k = slump(sc.k_min, sc.k_max)
+    var rows = []
+    var xs = []
+    for (var i=0;i<4;i++) {
+      var x; do { x=slump(1,10) } while(xs.indexOf(x)!==-1)
+      xs.push(x); rows.push({x:x, y:x*k})
+    }
+    rows.sort(function(a,b){return a.x-b.x})
+    q = { typ:1, sc:sc, k:k, rows:rows, korrekt:k }
+
+  } else {
+    // Is it proportional? Show a table, decide yes/no
+    var isProp = Math.random() > 0.4
+    if (isProp) {
+      var sc = slumpArr(scenarios)
+      var k = slump(sc.k_min, sc.k_max)
+      var rows = []
+      var xs = [1,2,3,4]
+      for (var i=0;i<4;i++) rows.push({x:xs[i], y:xs[i]*k})
+      q = { typ:2, sc:sc, k:k, rows:rows, isProp:true, korrekt:"ja" }
+    } else {
+      // Break proportionality: one value is slightly off
+      var sc = slumpArr(scenarios)
+      var k = slump(sc.k_min, sc.k_max)
+      var rows = []
+      var xs = [1,2,3,4]
+      for (var i=0;i<4;i++) {
+        var y = xs[i]*k
+        if (i===2) y = y + slump(1,3)*( Math.random()<0.5?1:-1) // break it
+        rows.push({x:xs[i], y:y})
+      }
+      q = { typ:2, sc:sc, k:k, rows:rows, isProp:false, korrekt:"nej" }
+    }
+  }
+}
+
+function renderFraga() {
+  var sb = document.getElementById("scenario-box")
+  var vis = document.getElementById("vis-area")
+  var tab = document.getElementById("tabell-area")
+  var graf = document.getElementById("graf-area")
+  var inp = document.getElementById("input-area")
+
+  vis.innerHTML = ""; tab.innerHTML = ""; graf.innerHTML = ""; inp.innerHTML = ""
+
+  if (q.typ === 0) {
+    sb.innerHTML =
+      '<div class="scenario-emoji">'+q.sc.emoji+'</div>' +
+      '<div class="scenario-text">'+
+      '<strong>'+q.x1+'</strong> '+q.sc.enhet1+' '+q.sc.verb+' <span class="accent2"><strong>'+q.y1+'</strong> '+q.sc.enhet2+'</span>.<br>'+
+      'Hur mycket '+q.sc.verb+' <strong class="accent3">'+q.x2+'</strong> '+q.sc.enhet1+'?'+
+      '</div>'
+
+    // Dot visual
+    vis.innerHTML = byggPunktVis()
+
+    // Table with unknown
+    tab.innerHTML =
+      '<table class="prop-table">'+
+      '<thead><tr><th>'+q.sc.enhet1+'</th><th>'+q.sc.enhet2+'</th></tr></thead>'+
+      '<tbody>'+
+      '<tr><td class="kand">'+q.x1+'</td><td class="kand">'+q.y1+'</td></tr>'+
+      '<tr><td class="kand accent3" style="color:var(--accent3)">'+q.x2+'</td><td class="okand">?</td></tr>'+
+      '</tbody></table>'
+
+    inp.innerHTML =
+      '<div class="svar-wrap">'+
+      '<input class="svar-input" id="svar-input" type="number" min="0" placeholder="?" onkeydown="if(event.key===\'Enter\')svara()">'+
+      '<span class="svar-enhet">'+q.sc.enhet2+'</span>'+
+      '</div>'
+
+  } else if (q.typ === 1) {
+    sb.innerHTML =
+      '<div class="scenario-emoji">'+q.sc.emoji+'</div>'+
+      '<div class="scenario-text">'+
+      'Sambandet är proportionellt.<br>'+
+      'Vad är <strong>konstantfaktorn</strong> (k = '+q.sc.enhet2+' ÷ '+q.sc.enhet1+')?'+
+      '</div>'
+
+    // Full table
+    var tHtml = '<table class="prop-table"><thead><tr><th>'+q.sc.enhet1+'</th><th>'+q.sc.enhet2+'</th><th>k = y÷x</th></tr></thead><tbody>'
+    for (var i=0;i<q.rows.length;i++) {
+      tHtml += '<tr><td class="kand">'+q.rows[i].x+'</td><td class="kand">'+q.rows[i].y+'</td><td class="okand">?</td></tr>'
+    }
+    tHtml += '</tbody></table>'
+    tab.innerHTML = tHtml
+
+    graf.innerHTML = byggGraf(q.rows, false)
+
+    inp.innerHTML =
+      '<div class="svar-wrap">'+
+      '<input class="svar-input" id="svar-input" type="number" min="0" placeholder="?" onkeydown="if(event.key===\'Enter\')svara()">'+
+      '<span class="svar-enhet">'+q.sc.enhet2+'/'+q.sc.enhet1+'</span>'+
+      '</div>'
+
+  } else {
+    sb.innerHTML =
+      '<div class="scenario-emoji">'+q.sc.emoji+'</div>'+
+      '<div class="scenario-text">'+
+      'Titta på tabellen. Är sambandet proportionellt?'+
+      '</div>'
+
+    var tHtml = '<table class="prop-table"><thead><tr><th>'+q.sc.enhet1+'</th><th>'+q.sc.enhet2+'</th><th>y÷x</th></tr></thead><tbody>'
+    for (var i=0;i<q.rows.length;i++) {
+      var ratio = (q.rows[i].y / q.rows[i].x).toFixed(1)
+      tHtml += '<tr><td class="kand">'+q.rows[i].x+'</td><td class="kand">'+q.rows[i].y+'</td><td class="kand" style="color:var(--muted)">'+ratio+'</td></tr>'
+    }
+    tHtml += '</tbody></table>'
+    tab.innerHTML = tHtml
+
+    inp.innerHTML =
+      '<div style="display:flex;gap:12px;margin-top:4px">'+
+      '<button class="btn-ja-nej" id="btn-ja" onclick="svaraJaNej(\'ja\')">✅ Ja, proportionellt</button>'+
+      '<button class="btn-ja-nej" id="btn-nej" onclick="svaraJaNej(\'nej\')">❌ Nej, inte proportionellt</button>'+
+      '</div>'
+    document.getElementById("btn-svara").style.display = "none"
+  }
+
+  // Focus input
+  setTimeout(function(){
+    var inp2 = document.getElementById("svar-input")
+    if (inp2) inp2.focus()
+  }, 80)
+}
+
+function byggPunktVis() {
+  var maxDots = Math.min(q.x1, 12)
+  var html = '<div class="vis-grid-wrap"><div class="vis-grid-label">📊 Bildlig representation</div><div class="vis-rows">'
+  // Row 1
+  html += '<div class="vis-row"><span class="vis-row-label">'+q.x1+' '+q.sc.enhet1+':</span>'
+  for (var i=0;i<Math.min(q.x1,12);i++) {
+    html += '<div class="vis-dot" style="animation-delay:'+(i*30)+'ms"></div>'
+  }
+  if (q.x1>12) html += '<span style="color:var(--muted);font-size:0.8rem">…+'+( q.x1-12)+'</span>'
+  html += '</div>'
+  // Row 2
+  html += '<div class="vis-row"><span class="vis-row-label">'+q.y1+' '+q.sc.enhet2+':</span>'
+  for (var j=0;j<Math.min(q.y1,20);j++) {
+    html += '<div class="vis-dot row2" style="width:14px;height:14px;animation-delay:'+(j*20)+'ms"></div>'
+  }
+  if (q.y1>20) html += '<span style="color:var(--muted);font-size:0.8rem">…+'+( q.y1-20)+'</span>'
+  html += '</div>'
+  html += '</div></div>'
+  return html
+}
+
+function byggGraf(rows, visaPunkter) {
+  var W=500, H=200, pad=44
+  var maxX = Math.max.apply(null, rows.map(function(r){return r.x})) + 1
+  var maxY = Math.max.apply(null, rows.map(function(r){return r.y})) * 1.2
+
+  function px(x){ return pad + (x/maxX)*(W-pad*2) }
+  function py(y){ return H-pad - (y/maxY)*(H-pad*2) }
+
+  var svg = '<svg class="graph-svg" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'
+
+  // Grid lines
+  for (var gx=0;gx<=maxX;gx++) {
+    svg += '<line x1="'+px(gx)+'" y1="'+pad+'" x2="'+px(gx)+'" y2="'+(H-pad)+'" stroke="#2d3f58" stroke-width="1"/>'
+    if (gx>0) svg += '<text x="'+px(gx)+'" y="'+(H-pad+14)+'" text-anchor="middle" fill="#6b82a8" font-size="11">'+gx+'</text>'
+  }
+  for (var gy=0;gy<=4;gy++) {
+    var yv = (maxY/4)*gy
+    svg += '<line x1="'+pad+'" y1="'+py(yv)+'" x2="'+(W-pad)+'" y2="'+py(yv)+'" stroke="#2d3f58" stroke-width="1"/>'
+    svg += '<text x="'+(pad-6)+'" y="'+(py(yv)+4)+'" text-anchor="end" fill="#6b82a8" font-size="11">'+Math.round(yv)+'</text>'
+  }
+
+  // Axes
+  svg += '<line x1="'+pad+'" y1="'+pad+'" x2="'+pad+'" y2="'+(H-pad)+'" stroke="#6b82a8" stroke-width="2"/>'
+  svg += '<line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="#6b82a8" stroke-width="2"/>'
+
+  // Proportional reference line (dashed)
+  if (rows.length>0) {
+    var k = rows[0].x > 0 ? rows[0].y / rows[0].x : 0
+    var ey = k * maxX
+    svg += '<line x1="'+px(0)+'" y1="'+py(0)+'" x2="'+px(maxX)+'" y2="'+py(ey)+'" stroke="#f7c948" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.4"/>'
+  }
+
+  // Points
+  var color = visaPunkter ? "#41c9a0" : "#41c9a0"
+  for (var i=0;i<rows.length;i++) {
+    var r = rows[i]
+    svg += '<circle cx="'+px(r.x)+'" cy="'+py(r.y)+'" r="6" fill="'+color+'" stroke="#0f1923" stroke-width="2"/>'
+    svg += '<text x="'+px(r.x)+'" y="'+(py(r.y)-10)+'" text-anchor="middle" fill="'+color+'" font-size="11" font-weight="bold">'+r.y+'</text>'
+  }
+
+  // Axis labels
+  svg += '<text x="'+(W/2)+'" y="'+(H-2)+'" text-anchor="middle" fill="#6b82a8" font-size="11">'+( q.sc ? q.sc.enhet1 : 'x')+'</text>'
+  svg += '<text x="12" y="'+(H/2)+'" text-anchor="middle" fill="#6b82a8" font-size="11" transform="rotate(-90,12,'+(H/2)+')">'+( q.sc ? q.sc.enhet2 : 'y')+'</text>'
+
+  svg += '</svg>'
+  return '<div class="graph-wrap"><div class="graph-label">📈 Graf</div>'+svg+'</div>'
+}
+
+// ja/nej buttons styling
+var style2 = document.createElement('style')
+style2.innerHTML = '.btn-ja-nej { flex:1; padding:12px 8px; border-radius:12px; border:2px solid var(--border); background:var(--card2); color:var(--text); font-family:"Lexend Deca",sans-serif; font-size:0.88rem; font-weight:700; cursor:pointer; transition:all 0.15s; } .btn-ja-nej:hover:not(:disabled){border-color:var(--accent);color:var(--accent);} .btn-ja-nej:disabled{opacity:0.4;cursor:not-allowed;}'
+document.head.appendChild(style2)
+
+function svaraJaNej(val) {
+  if (svaratDenna) return
+  svaratDenna = true
+  var ratt = val === q.korrekt
+
+  document.getElementById("btn-ja").disabled = true
+  document.getElementById("btn-nej").disabled = true
+  if (val==="ja")  document.getElementById("btn-ja").style.borderColor  = ratt?"var(--right)":"var(--wrong)"
+  if (val==="nej") document.getElementById("btn-nej").style.borderColor = ratt?"var(--right)":"var(--wrong)"
+  if (q.korrekt==="ja")  document.getElementById("btn-ja").style.borderColor  = "var(--right)"
+  if (q.korrekt==="nej") document.getElementById("btn-nej").style.borderColor = "var(--right)"
+
+  visaResultat(ratt, val, q.korrekt)
+}
+
+function svara() {
+  if (svaratDenna) return
+  var inp = document.getElementById("svar-input")
+  if (!inp || inp.value==="") return
+  svaratDenna = true
+
+  var val = parseFloat(inp.value)
+  var ratt = val === q.korrekt
+  inp.disabled = true
+  inp.classList.add(ratt?"ratt":"fel")
+
+  visaResultat(ratt, String(val), String(q.korrekt))
+}
+
+function visaResultat(ratt, dittSvar, rattSvarText) {
+  var fb = document.getElementById("feedback")
+  var fk = document.getElementById("forklaring")
+
+  var forkl = byggForklaring()
+
+  if (ratt) {
+    rattSvar++
+    historia[fragaNr] = { resultat:"ratt", fraga:byggFragaTxt(), dittSvar:dittSvar, ratt:rattSvarText }
+    fb.innerHTML = "✅ Rätt! Bra jobbat!"; fb.className = "feedback ratt"
+  } else {
+    felSvar++
+    historia[fragaNr] = { resultat:"fel", fraga:byggFragaTxt(), dittSvar:dittSvar, ratt:rattSvarText }
+    fb.innerHTML = "❌ Fel! Rätt svar: "+rattSvarText; fb.className = "feedback fel"
+  }
+
+  fk.innerHTML = forkl
+  fk.classList.add("synlig")
+  document.getElementById("btn-svara").style.display = "none"
+  document.getElementById("btn-nasta").classList.add("synlig")
+  fragaNr++; uppdateraScore(); byggProgress()
+}
+
+function byggForklaring() {
+  if (q.typ===0) {
+    return '<strong>Konstantfaktor:</strong> k = <span class="hl">'+q.y1+'</span> ÷ <span class="hl">'+q.x1+'</span> = <span class="hl2">'+q.k+'</span> '+q.sc.enhet2+'/'+q.sc.enhet1+'<br>'+
+           '<strong>Svar:</strong> '+q.x2+' × <span class="hl2">'+q.k+'</span> = <span class="hl">'+q.korrekt+'</span> '+q.sc.enhet2+' ('+q.x2+' '+q.sc.enhet1+' '+q.sc.verb+' '+q.korrekt+' '+q.sc.enhet2+')<br>'+
+           '<em>Vid proportionella samband: y = k × x</em>'
+  } else if (q.typ===1) {
+    return '<strong>k</strong> = y ÷ x = <span class="hl">'+q.rows[0].y+'</span> ÷ <span class="hl">'+q.rows[0].x+'</span> = <span class="hl2">'+q.k+'</span><br>'+
+           'Samma för alla par: '+q.rows.map(function(r){return r.y+'÷'+r.x+'='+q.k}).join(', ')+'<br>'+
+           '<em>Konstantfaktorn är alltid samma → proportionellt samband!</em>'
+  } else {
+    if (q.isProp) {
+      return 'Kvoten y÷x är <strong>konstant ('+q.k+')</strong> för alla par → <span class="hl2">Ja, proportionellt!</span><br>'+
+             'Graf: punkterna ligger på en rät linje genom origo.'
+    } else {
+      var ratios = q.rows.map(function(r){return (r.y/r.x).toFixed(1)})
+      return 'Kvoten y÷x är <strong>inte konstant</strong>: '+ratios.join(', ')+'<br>'+
+             '→ <span style="color:var(--wrong)">Ej proportionellt!</span> Kvoten måste vara densamma för alla par.<br>'+
+             'Graf: punkterna ligger inte på en rät linje genom origo.'
+    }
+  }
+}
+
+function byggFragaTxt() {
+  if (q.typ===0) return q.x1+' '+q.sc.enhet1+' = '+q.y1+' '+q.sc.enhet2+' → '+q.x2+' '+q.sc.enhet1+' = ?'
+  if (q.typ===1) return 'Tabell med k='+q.k+' → hitta konstantfaktor'
+  return 'Är sambandet proportionellt? → '+(q.isProp?"Ja":"Nej")
+}
+
+function uppdateraScore() {
+  document.getElementById("ratt-num").innerHTML = rattSvar
+  document.getElementById("fel-num").innerHTML  = felSvar
+}
+
+function byggProgress() {
+  var html = ""
+  for (var i=0;i<totalFragor;i++) {
+    var k = "dot"
+    if (historia[i] && historia[i].resultat==="ratt") k+=" ratt"
+    else if (historia[i] && historia[i].resultat==="fel") k+=" fel"
+    else if (i===fragaNr) k+=" aktiv"
+    html += '<div class="'+k+'"></div>'
+  }
+  document.getElementById("progress").innerHTML = html
+}
+
+function visaWin() {
+  var pct = Math.round(rattSvar/totalFragor*100)
+  document.getElementById("win-namn").innerHTML  = spelarNamn
+  document.getElementById("win-score").innerHTML = rattSvar+" av "+totalFragor+" rätt ("+pct+"%)"
+  var t = pct===100?"🌟 Perfekt! Du kan proportionalitet!":pct>=80?"Mycket bra jobbat!":pct>=60?"Bra! Öva lite till!":"Fortsätt öva — du lär dig!"
+  document.getElementById("win-text").innerHTML = t
+
+  var html = ""
+  for (var i=0;i<historia.length;i++) {
+    var h = historia[i]
+    var ar_ratt = h.resultat==="ratt"
+    html += '<div class="win-rad '+h.resultat+'">'
+    html += '<div>'+(ar_ratt?"✅":"❌")+'</div>'
+    html += '<div class="win-rad-info">'
+    html += '<div class="win-rad-q">Fråga '+(i+1)+': '+h.fraga+'</div>'
+    if (ar_ratt) {
+      html += '<div class="win-ditt-ratt">Ditt svar: '+h.ratt+' ✓</div>'
+    } else {
+      html += '<div class="win-ditt-fel">Ditt svar: '+h.dittSvar+' ✗</div>'
+      html += '<div class="win-korrekt">→ Rätt svar: '+h.ratt+'</div>'
+    }
+    html += '</div></div>'
+  }
+  document.getElementById("win-lista").innerHTML = html
+  document.getElementById("win-overlay").classList.add("synlig")
+}
+
+byggProgress()
+</script>
+</body>
+</html>

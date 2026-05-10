@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<title>Bråkspelet</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f4ff;
+  --surface: #fff;
+  --border: #ccd5f0;
+  --text: #1a2040;
+  --muted: #7080b0;
+  --delen: #7c3aed;
+  --brak: #0ea5e9;
+  --hel: #10b981;
+  --wrong: #ef4444;
+  --right: #22c55e;
+  --shadow: 0 4px 24px rgba(26,32,64,0.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 56px;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(124,58,237,0.07) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(14,165,233,0.07) 0%, transparent 40%);
+}
+
+h1 {
+  font-family: 'Baloo 2', cursive;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.tagline { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; text-align: center; }
+
+/* Name overlay */
+#namn-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: rgba(240,244,255,0.97);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  padding: 24px;
+}
+#namn-overlay.dold { display: none; }
+.namn-rubrik { font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800; }
+.namn-under { color: var(--muted); font-size: 0.9rem; margin-top: -8px; }
+.namn-input {
+  width: 260px; padding: 14px 18px; border-radius: 16px;
+  border: 2px solid var(--border); background: var(--surface);
+  color: var(--text); font-family: 'Baloo 2', cursive; font-size: 1.5rem;
+  text-align: center; outline: none; transition: border-color 0.2s;
+  box-shadow: var(--shadow);
+}
+.namn-input:focus { border-color: var(--delen); }
+.btn-starta-namn {
+  background: var(--delen); color: white; border: none; border-radius: 14px;
+  padding: 14px 44px; font-family: 'Baloo 2', cursive; font-size: 1.2rem;
+  font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+  transition: all 0.15s;
+}
+.btn-starta-namn:hover { transform: translateY(-2px); }
+
+/* Legend */
+.legend { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+.pill {
+  display: flex; align-items: center; gap: 6px; background: var(--surface);
+  border: 2px solid var(--border); border-radius: 99px; padding: 5px 14px;
+  font-weight: 700; font-size: 0.85rem;
+}
+.pill-dot { width: 12px; height: 12px; border-radius: 50%; }
+.pill-delen .pill-dot { background: var(--delen); }
+.pill-brak  .pill-dot { background: var(--brak); }
+.pill-hel   .pill-dot { background: var(--hel); }
+.pill-formula {
+  background: var(--surface); border: 2px solid var(--border); border-radius: 12px;
+  padding: 8px 16px; font-size: 0.82rem; color: var(--muted); text-align: center;
+  line-height: 1.7; font-weight: 600;
+}
+.pill-formula span { color: var(--text); font-weight: 700; }
+
+/* Score */
+.scorebar {
+  display: flex; gap: 20px; margin-bottom: 20px; background: var(--surface);
+  border: 2px solid var(--border); border-radius: 16px; padding: 12px 24px;
+  box-shadow: var(--shadow);
+}
+.score-box { text-align: center; }
+.score-num { font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 800; line-height: 1; }
+.score-num.r { color: var(--right); }
+.score-num.f { color: var(--wrong); }
+.score-num.n { color: var(--muted); }
+.score-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 6px; margin-bottom: 20px; background: var(--surface);
+  border: 2px solid var(--border); border-radius: 14px; padding: 4px;
+}
+.tab {
+  padding: 8px 16px; border-radius: 10px; border: none; font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer; background: transparent;
+  color: var(--muted); transition: all 0.2s; white-space: nowrap;
+}
+.tab.active { background: var(--text); color: white; }
+
+/* Progress */
+.progress { display: flex; gap: 6px; margin-bottom: 20px; justify-content: center; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+.dot.ratt { background: var(--right); }
+.dot.fel  { background: var(--wrong); }
+.dot.aktiv { background: var(--delen); }
+
+/* Card */
+.card {
+  background: var(--surface); border: 2px solid var(--border); border-radius: 24px;
+  padding: 28px 24px; width: 100%; max-width: 560px; box-shadow: var(--shadow); margin-bottom: 16px;
+}
+.fraga-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+
+/* Bar */
+.vis-wrap { margin-bottom: 20px; }
+.vis-label-row { display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; }
+.bar-outer {
+  width: 100%; height: 56px; background: #dde6ff; border-radius: 14px;
+  overflow: hidden; display: flex; border: 2px solid var(--border);
+}
+.bar-segment { height: 100%; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-size: 0.9rem; font-weight: 700; color: white; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; padding: 0 6px; }
+.bar-segment + .bar-segment { border-left: 2px solid rgba(255,255,255,0.4); }
+.bar-del-seg  { background: var(--delen); }
+.bar-rest-seg { background: #b8c8f0; color: var(--muted); font-size: 0.8rem; }
+.bar-del-seg + .bar-del-seg   { border-left: 2px solid rgba(255,255,255,0.5); }
+.bar-rest-seg + .bar-rest-seg { border-left: 2px solid rgba(255,255,255,0.35); }
+
+/* Fraction */
+.brak-display {
+  display: inline-flex; flex-direction: column; align-items: center;
+  font-family: 'Baloo 2', cursive; font-weight: 800; line-height: 1;
+  background: rgba(14,165,233,0.1); border: 2px solid rgba(14,165,233,0.3);
+  border-radius: 10px; padding: 6px 14px; margin: 0 4px;
+}
+.brak-top { font-size: 1.3rem; color: var(--brak); }
+.brak-line { width: 100%; height: 2.5px; background: var(--brak); margin: 2px 0; border-radius: 2px; }
+.brak-bot { font-size: 1.3rem; color: var(--brak); }
+.brak-qmark { font-size: 1.6rem; color: var(--muted); }
+
+/* Question text */
+.fraga-text {
+  font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 700;
+  margin-bottom: 16px; line-height: 1.5; display: flex; align-items: center;
+  flex-wrap: wrap; gap: 6px;
+}
+.delen-c  { color: var(--delen); font-weight: 800; }
+.brak-c   { color: var(--brak);  font-weight: 800; }
+.hel-c    { color: var(--hel);   font-weight: 800; }
+
+/* Input */
+.svar-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.svar-input {
+  width: 110px; padding: 10px; border-radius: 12px; border: 2px solid var(--border);
+  background: var(--bg); color: var(--text); font-family: 'Baloo 2', cursive;
+  font-size: 1.5rem; text-align: center; outline: none; transition: border-color 0.2s;
+}
+.svar-input:focus { border-color: var(--delen); }
+.svar-input.ratt { border-color: var(--right); background: rgba(34,197,94,0.08); }
+.svar-input.fel  { border-color: var(--wrong); background: rgba(239,68,68,0.08); }
+
+/* Buttons */
+.btn-svara {
+  width: 100%; background: var(--text); color: white; border: none; border-radius: 14px;
+  padding: 14px; font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 700;
+  cursor: pointer; margin-top: 18px; transition: all 0.15s;
+}
+.btn-svara:hover:not(:disabled) { background: #0a1030; }
+.btn-svara:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-nasta {
+  width: 100%; background: transparent; color: var(--text); border: 2px solid var(--text);
+  border-radius: 14px; padding: 12px; font-family: 'Baloo 2', cursive; font-size: 1.1rem;
+  font-weight: 700; cursor: pointer; margin-top: 10px; display: none; transition: all 0.15s;
+}
+.btn-nasta.synlig { display: block; }
+.btn-nasta:hover { background: var(--text); color: white; }
+
+/* Feedback & explanation */
+.feedback { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 700; min-height: 1.5rem; margin-top: 12px; text-align: center; }
+.feedback.ratt { color: var(--right); }
+.feedback.fel  { color: var(--wrong); }
+
+.forklaring {
+  background: #eef2ff; border-radius: 12px; padding: 14px 16px; margin-top: 10px;
+  font-size: 0.88rem; line-height: 1.8; color: var(--muted); display: none;
+  border-left: 4px solid var(--brak);
+}
+.forklaring.synlig { display: block; }
+.forklaring strong { color: var(--text); }
+
+/* Visual explanation */
+.vis-forklaring { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.vis-forklaring-rubrik { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+.vis-bar-wrap { margin-bottom: 10px; }
+.vis-bar-labels { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 700; margin-bottom: 3px; }
+.vis-bar-outer { width: 100%; height: 44px; background: #dde6ff; border-radius: 10px; overflow: hidden; display: flex; border: 2px solid var(--border); }
+.vis-bar-del { height: 100%; background: var(--delen); display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-size: 0.85rem; font-weight: 700; color: white; transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; padding: 0 6px; }
+.vis-bar-rest { height: 100%; background: #b8c8f0; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; color: var(--muted); font-weight: 600; flex: 1; }
+
+/* Delar grid — denominator rows × numerator cols */
+.delar-grid-wrap { margin-top: 10px; }
+.delar-grid {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+}
+.delar-ruta {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  border: 2px solid #b8c8f0;
+  background: #dde6ff;
+  transition: background 0.2s;
+}
+.delar-ruta.del { background: var(--delen); border-color: #5b21b6; }
+.delar-legend { font-size: 0.75rem; font-weight: 700; margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+.leg-del  { color: var(--delen); }
+.leg-rest { color: var(--muted); }
+
+/* Win overlay */
+#win-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(240,244,255,0.96);
+  backdrop-filter: blur(10px); z-index: 100; flex-direction: column; align-items: center;
+  justify-content: flex-start; gap: 10px; padding: 28px 16px 40px; overflow-y: auto;
+}
+#win-overlay.synlig { display: flex; }
+.win-emoji { font-size: 3.2rem; }
+.win-titel { font-family: 'Baloo 2', cursive; font-size: 1rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+.win-namn  { font-family: 'Baloo 2', cursive; font-size: 2.8rem; font-weight: 800; color: var(--delen); }
+.win-score { font-family: 'Baloo 2', cursive; font-size: 1.5rem; font-weight: 700; }
+.win-text  { color: var(--muted); font-size: 0.95rem; }
+.win-rubrik-fragor { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 0.95rem; color: var(--muted); letter-spacing: 1px; width: 100%; max-width: 520px; text-align: left; margin-top: 6px; }
+.win-fragor { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 7px; }
+.fraga-rad { display: flex; align-items: flex-start; gap: 10px; background: var(--surface); border-radius: 12px; padding: 10px 14px; border-left: 4px solid var(--border); box-shadow: 0 2px 8px rgba(26,32,64,0.06); }
+.fraga-rad.ratt { border-left-color: var(--right); }
+.fraga-rad.fel  { border-left-color: var(--wrong); }
+.fraga-ikon { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+.fraga-info { flex: 1; font-size: 0.83rem; line-height: 1.6; }
+.fraga-info .fraga-q  { color: var(--muted); }
+.fraga-info .ditt-ratt { color: var(--right); font-weight: 700; }
+.fraga-info .ditt-fel  { color: var(--wrong); font-weight: 700; }
+.fraga-info .korrekt   { color: var(--brak);  font-weight: 700; }
+.btn-igen {
+  background: var(--delen); color: white; border: none; border-radius: 14px;
+  padding: 14px 44px; font-family: 'Baloo 2', cursive; font-size: 1.15rem;
+  font-weight: 700; cursor: pointer; margin-top: 12px;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.3); transition: all 0.2s;
+}
+.btn-igen:hover { transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<!-- Name overlay -->
+<div id="namn-overlay">
+  <div style="font-size:3rem">🔢</div>
+  <div class="namn-rubrik">Delen, Andelen & Det Hela!</div>
+  <div class="namn-under">Lär dig sambandet mellan del, andel och helhet</div>
+  <input class="namn-input" id="spelar-namn" type="text" maxlength="20" placeholder="Ditt namn..." onkeydown="if(event.key==='Enter')startaMedNamn()" autofocus>
+  <button class="btn-starta-namn" onclick="startaMedNamn()">Spela! 🚀</button>
+</div>
+
+<h1>🔢 Delen, Andelen & Det Hela</h1>
+<p class="tagline">Lär dig sambandet mellan del, andel och helhet</p>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="pill pill-delen"><div class="pill-dot"></div>Delen</div>
+  <div class="pill pill-brak" ><div class="pill-dot"></div>Andelen (bråk)</div>
+  <div class="pill pill-hel"  ><div class="pill-dot"></div>Det hela</div>
+  <div class="pill-formula">
+    <span>Delen = Andelen × Det hela</span><br>
+    <span>Andelen = Delen ÷ Det hela</span><br>
+    <span>Det hela = Delen ÷ Andelen</span>
+  </div>
+</div>
+
+<!-- Score -->
+<div class="scorebar">
+  <div class="score-box"><div class="score-num r" id="ratt-num">0</div><div class="score-lbl">✅ Rätt</div></div>
+  <div class="score-box"><div class="score-num f" id="fel-num">0</div><div class="score-lbl">❌ Fel</div></div>
+  <div class="score-box"><div class="score-num n" id="fraga-num">1</div><div class="score-lbl">av 10</div></div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" id="tab-delen"  onclick="byttLage('hitta_delen')">Hitta Delen</button>
+  <button class="tab"        id="tab-brak"   onclick="byttLage('hitta_brak')">Hitta Andelen</button>
+  <button class="tab"        id="tab-hel"    onclick="byttLage('hitta_hel')">Hitta Det Hela</button>
+</div>
+
+<div class="progress" id="progress"></div>
+
+<!-- Card -->
+<div class="card">
+  <div class="fraga-label" id="fraga-label">Fråga 1 av 10</div>
+
+  <!-- Bar -->
+  <div class="vis-wrap">
+    <div class="vis-label-row">
+      <span id="bar-left-label"></span>
+      <span id="bar-right-label"></span>
+    </div>
+    <div class="bar-outer" id="bar-outer"></div>
+  </div>
+
+  <div class="fraga-text" id="fraga-text"></div>
+  <div id="input-area"></div>
+
+  <div class="feedback"   id="feedback"></div>
+  <div class="forklaring" id="forklaring"></div>
+
+  <button class="btn-svara" id="btn-svara" onclick="svara()">Svara!</button>
+  <button class="btn-nasta" id="btn-nasta" onclick="nastaFraga()">Nästa fråga →</button>
+</div>
+
+<!-- Win overlay -->
+<div id="win-overlay">
+  <div class="win-emoji">🏆</div>
+  <div class="win-titel">Grattis!</div>
+  <div class="win-namn"  id="win-namn"></div>
+  <div class="win-score" id="win-score"></div>
+  <div class="win-text"  id="win-text"></div>
+  <div class="win-rubrik-fragor">📋 Alla frågor:</div>
+  <div class="win-fragor" id="win-fragor"></div>
+  <button class="btn-igen" onclick="startaOm()">Spela igen! 🔢</button>
+</div>
+
+<script>
+var spelarNamn = ""
+var lage = "hitta_delen"
+var fragaNr = 0
+var totalFragor = 10
+var rattSvar = 0
+var felSvar = 0
+var svaratDenna = false
+var historia = []
+var anvandaFragor = []
+var q = {}
+
+// Bra bråk för åk 6: täljare/nämnare där det ger hela tal med vanliga helheter
+var brakLista = [
+  {t:1,n:2}, {t:1,n:3}, {t:2,n:3}, {t:1,n:4}, {t:3,n:4},
+  {t:1,n:5}, {t:2,n:5}, {t:3,n:5}, {t:4,n:5},
+  {t:1,n:6}, {t:5,n:6}, {t:1,n:8}, {t:3,n:8}, {t:5,n:8}, {t:7,n:8},
+  {t:1,n:10},{t:3,n:10},{t:7,n:10},{t:9,n:10}
+]
+
+// Helheter som ger hela tal med vanliga nämnare
+var helhetLista = [6,8,10,12,15,16,20,24,25,30,40,50,100]
+
+function gcd(a,b){ return b===0?a:gcd(b,a%b) }
+
+function startaMedNamn() {
+  var val = document.getElementById("spelar-namn").value.trim()
+  spelarNamn = val !== "" ? val : "Spelare"
+  document.getElementById("namn-overlay").classList.add("dold")
+  startaOm()
+}
+
+function byttLage(nyttLage) {
+  lage = nyttLage
+  document.getElementById("tab-delen").classList.toggle("active", lage==="hitta_delen")
+  document.getElementById("tab-brak").classList.toggle("active",  lage==="hitta_brak")
+  document.getElementById("tab-hel").classList.toggle("active",   lage==="hitta_hel")
+  startaOm()
+}
+
+function startaOm() {
+  fragaNr=0; rattSvar=0; felSvar=0; historia=[]; anvandaFragor=[]
+  document.getElementById("win-overlay").classList.remove("synlig")
+  uppdateraScore(); byggProgress(); nastaFraga()
+}
+
+function genFraga() {
+  var tries=0, brak, hel, del
+  do {
+    brak = brakLista[Math.floor(Math.random()*brakLista.length)]
+    hel  = helhetLista[Math.floor(Math.random()*helhetLista.length)]
+    del  = (brak.t / brak.n) * hel
+    tries++
+  } while (del !== Math.round(del) || del===0 || del===hel || tries>300)
+
+  var key = brak.t+"/"+brak.n+"_"+hel
+  if (anvandaFragor.indexOf(key) !== -1 && anvandaFragor.length < 40) return genFraga()
+  anvandaFragor.push(key)
+
+  return { t: brak.t, n: brak.n, hel: hel, del: del }
+}
+
+function nastaFraga() {
+  if (fragaNr >= totalFragor) { visaWin(); return }
+  svaratDenna = false
+
+  document.getElementById("feedback").innerHTML = ""
+  document.getElementById("feedback").className = "feedback"
+  document.getElementById("forklaring").classList.remove("synlig")
+  document.getElementById("btn-nasta").classList.remove("synlig")
+  document.getElementById("btn-svara").style.display = "block"
+  document.getElementById("btn-svara").disabled = false
+
+  q = genFraga()
+
+  document.getElementById("fraga-num").innerHTML = fragaNr + 1
+  document.getElementById("fraga-label").innerHTML = "Fråga "+(fragaNr+1)+" av "+totalFragor
+  byggProgress()
+  byggFragaUI()
+}
+
+function frakHTML(t, n, okand) {
+  if (okand) {
+    return '<div class="brak-display"><span class="brak-qmark">?</span></div>'
+  }
+  return '<div class="brak-display"><span class="brak-top">'+t+'</span><div class="brak-line"></div><span class="brak-bot">'+n+'</span></div>'
+}
+
+function byggBar(visaDelen) {
+  // visaDelen: true = visa rätt värden, false = dölj okänt
+  var delenTxt = (lage==="hitta_delen" && !visaDelen) ? "?" : q.del
+  var helTxt   = (lage==="hitta_hel"   && !visaDelen) ? "?" : q.hel
+
+  document.getElementById("bar-left-label").innerHTML =
+    '<span style="color:var(--delen)">Delen: <b>'+delenTxt+'</b></span>'
+  document.getElementById("bar-right-label").innerHTML =
+    '<span style="color:var(--muted)">Det hela: <b>'+helTxt+'</b></span>'
+
+  // Build q.n equal segments: q.t filled, rest empty
+  var html = ""
+  var segW = (100 / q.n).toFixed(4) + "%"
+  for (var i = 0; i < q.n; i++) {
+    var filled = i < q.t
+    var label = ""
+    // Only label first filled and first rest segment
+    if (i === 0) label = filled ? (visaDelen ? q.del : "?") : ""
+    if (i === q.t && !filled) label = ""
+    html += '<div class="bar-segment '+(filled?"bar-del-seg":"bar-rest-seg")+
+            '" style="width:'+segW+'">'+label+'</div>'
+  }
+  document.getElementById("bar-outer").innerHTML = html
+}
+
+function byggFragaUI() {
+  byggBar(false)
+
+  // Question text
+  var ft = document.getElementById("fraga-text")
+  ft.innerHTML = ""
+
+  if (lage === "hitta_delen") {
+    ft.innerHTML = frakHTML(q.t, q.n, false) +
+      ' <span>av</span> <span class="hel-c">'+q.hel+'</span> <span>= ?</span>'
+  } else if (lage === "hitta_brak") {
+    ft.innerHTML = '<span class="delen-c">'+q.del+'</span> <span>av</span> '+
+      '<span class="hel-c">'+q.hel+'</span> <span>= vilken andel?</span>'
+  } else {
+    ft.innerHTML = frakHTML(q.t, q.n, false) +
+      '<span> av ? =</span> <span class="delen-c">'+q.del+'</span>'
+  }
+
+  byggInmatning()
+}
+
+function byggInmatning() {
+  var html = ""
+  if (lage === "hitta_brak") {
+    // Two inputs: täljare / nämnare
+    html = '<div class="svar-wrap" style="flex-direction:column;align-items:flex-start;gap:6px">'
+    html += '<div style="font-size:0.82rem;color:var(--muted);font-weight:700">Skriv in andelen (som bråk):</div>'
+    html += '<div style="display:flex;align-items:center;gap:8px">'
+    html += '<div style="display:flex;flex-direction:column;align-items:center;gap:3px">'
+    html += '<input class="svar-input" id="svar-t" type="number" min="1" placeholder="täl" style="width:80px" onkeydown="if(event.key===\'Enter\')svara()">'
+    html += '<div style="width:80px;height:3px;background:var(--brak);border-radius:2px"></div>'
+    html += '<input class="svar-input" id="svar-n" type="number" min="1" placeholder="nämn" style="width:80px" onkeydown="if(event.key===\'Enter\')svara()">'
+    html += '</div>'
+    html += '<span style="font-size:0.8rem;color:var(--muted)">täljare<br>nämnare</span>'
+    html += '</div></div>'
+  } else {
+    html = '<div class="svar-wrap">'
+    html += '<input class="svar-input" id="svar-input" type="number" min="0" placeholder="?" onkeydown="if(event.key===\'Enter\')svara()">'
+    html += '</div>'
+  }
+  document.getElementById("input-area").innerHTML = html
+  document.getElementById("btn-svara").style.display = "block"
+  setTimeout(function(){
+    var inp = document.getElementById("svar-input") || document.getElementById("svar-t")
+    if(inp) inp.focus()
+  }, 100)
+}
+
+function svara() {
+  if (svaratDenna) return
+  svaratDenna = true
+
+  var ratt, dittSvar, rattSvarText
+
+  if (lage === "hitta_brak") {
+    var it = parseInt(document.getElementById("svar-t").value)
+    var in_ = parseInt(document.getElementById("svar-n").value)
+    if (isNaN(it) || isNaN(in_) || in_===0) { svaratDenna=false; return }
+    // Förenkla och jämför
+    var g1 = gcd(it,in_), g2 = gcd(q.t,q.n)
+    ratt = (it/g1 === q.t/g2) && (in_/g1 === q.n/g2)
+    dittSvar = it+"/"+in_
+    rattSvarText = q.t+"/"+q.n
+    document.getElementById("svar-t").disabled = true
+    document.getElementById("svar-n").disabled = true
+    document.getElementById("svar-t").classList.add(ratt?"ratt":"fel")
+    document.getElementById("svar-n").classList.add(ratt?"ratt":"fel")
+  } else {
+    var inp = document.getElementById("svar-input")
+    if (!inp || inp.value==="") { svaratDenna=false; return }
+    var val = parseFloat(inp.value)
+    var korrekt = lage==="hitta_delen" ? q.del : q.hel
+    ratt = val === korrekt
+    dittSvar = String(val)
+    rattSvarText = String(korrekt)
+    inp.disabled = true
+    inp.classList.add(ratt?"ratt":"fel")
+  }
+
+  var fb = document.getElementById("feedback")
+  var fk = document.getElementById("forklaring")
+
+  // Formula explanation
+  var forkl = ""
+  if (lage === "hitta_delen") {
+    forkl = "<strong>Formel:</strong> Delen = Andelen × Det hela<br>" +
+            q.t+"/"+q.n+" × "+q.hel+" = "+q.t+" × "+q.hel+" ÷ "+q.n+
+            " = "+q.t*q.hel+" ÷ "+q.n+" = <strong>"+q.del+"</strong>"
+  } else if (lage === "hitta_brak") {
+    forkl = "<strong>Formel:</strong> Andelen = Delen ÷ Det hela<br>" +
+            q.del+" ÷ "+q.hel+" = "+q.del+"/"+q.hel
+    var g = gcd(q.del, q.hel)
+    if (g>1) forkl += " = <strong>"+q.del/g+"/"+q.hel/g+"</strong>"
+    else forkl += " = <strong>"+q.t+"/"+q.n+"</strong>"
+  } else {
+    forkl = "<strong>Formel:</strong> Det hela = Delen ÷ Andelen<br>" +
+            q.del+" ÷ "+q.t+"/"+q.n+" = "+q.del+" × "+q.n+"/"+q.t+
+            " = "+(q.del*q.n)+" ÷ "+q.t+" = <strong>"+q.hel+"</strong>"
+  }
+
+  if (ratt) {
+    rattSvar++
+    historia[fragaNr] = { resultat:"ratt", fraga:byggFragaTxt(), dittSvar:dittSvar, ratt:rattSvarText }
+    fb.innerHTML = "✅ Rätt!"; fb.className = "feedback ratt"
+  } else {
+    felSvar++
+    historia[fragaNr] = { resultat:"fel", fraga:byggFragaTxt(), dittSvar:dittSvar, ratt:rattSvarText }
+    fb.innerHTML = "❌ Fel! Rätt svar: "+rattSvarText; fb.className = "feedback fel"
+  }
+
+  fk.innerHTML = forkl + byggVisuellForklaring()
+  fk.classList.add("synlig")
+
+  // Uppdatera bar med rätt värden
+  byggBar(true)
+
+  document.getElementById("btn-svara").style.display = "none"
+  document.getElementById("btn-nasta").classList.add("synlig")
+  fragaNr++; uppdateraScore(); byggProgress()
+}
+
+function byggVisuellForklaring() {
+  // Grid: q.n columns × rows so total = q.hel, q.del cells filled
+  // Show a grid of q.hel cells divided into q.n equal groups
+  var html = '<div class="vis-forklaring">'
+  html += '<div class="vis-forklaring-rubrik">📊 Bildlig förklaring</div>'
+
+  // Bar
+  var pct = (q.t/q.n)*100
+  html += '<div class="vis-bar-wrap">'
+  html += '<div class="vis-bar-labels">'
+  html += '<span style="color:var(--delen)">Delen: '+q.del+' (andel: '+q.t+'/'+q.n+')</span>'
+  html += '<span style="color:var(--muted)">Det hela: '+q.hel+'</span>'
+  html += '</div>'
+  html += '<div class="vis-bar-outer">'
+  var segW2 = (100/q.n).toFixed(4)+"%"
+  for (var s = 0; s < q.n; s++) {
+    var fil = s < q.t
+    html += '<div class="bar-segment '+(fil?"bar-del-seg":"bar-rest-seg")+
+            '" style="width:'+segW2+'">'+(s===0&&fil ? q.t+'/'+q.n : '')+'</div>'
+  }
+  html += '</div></div>'
+
+  html += '</div>'
+  return html
+}
+
+function byggFragaTxt() {
+  if (lage==="hitta_delen")  return q.t+"/"+q.n+" av "+q.hel+" = ?"
+  if (lage==="hitta_brak")   return q.del+" av "+q.hel+" = vilken andel?"
+  return q.t+"/"+q.n+" av ? = "+q.del
+}
+
+function uppdateraScore() {
+  document.getElementById("ratt-num").innerHTML = rattSvar
+  document.getElementById("fel-num").innerHTML  = felSvar
+}
+
+function byggProgress() {
+  var html = ""
+  for (var i = 0; i < totalFragor; i++) {
+    var k = "dot"
+    if (historia[i] && historia[i].resultat==="ratt") k += " ratt"
+    else if (historia[i] && historia[i].resultat==="fel") k += " fel"
+    else if (i===fragaNr) k += " aktiv"
+    html += '<div class="'+k+'"></div>'
+  }
+  document.getElementById("progress").innerHTML = html
+}
+
+function visaWin() {
+  var pct = Math.round(rattSvar/totalFragor*100)
+  document.getElementById("win-namn").innerHTML  = spelarNamn
+  document.getElementById("win-score").innerHTML = rattSvar+" av "+totalFragor+" rätt ("+pct+"%)"
+  var t = pct===100 ? "🌟 Perfekt! Du behärskar bråk!"
+        : pct>=80   ? "Mycket bra jobbat!"
+        : pct>=60   ? "Bra! Öva lite till!"
+        :             "Fortsätt öva — du lär dig!"
+  document.getElementById("win-text").innerHTML = t
+
+  var html = ""
+  for (var i = 0; i < historia.length; i++) {
+    var h = historia[i]
+    var ar_ratt = h.resultat==="ratt"
+    html += '<div class="fraga-rad '+h.resultat+'">'
+    html += '<div class="fraga-ikon">'+(ar_ratt?"✅":"❌")+'</div>'
+    html += '<div class="fraga-info">'
+    html += '<div class="fraga-q">Fråga '+(i+1)+': '+h.fraga+'</div>'
+    if (ar_ratt) {
+      html += '<div class="ditt-ratt">Ditt svar: '+h.ratt+' ✓</div>'
+    } else {
+      html += '<div class="ditt-fel">Ditt svar: '+h.dittSvar+' ✗</div>'
+      html += '<div class="korrekt">→ Rätt svar: '+h.ratt+'</div>'
+    }
+    html += '</div></div>'
+  }
+  document.getElementById("win-fragor").innerHTML = html
+  document.getElementById("win-overlay").classList.add("synlig")
+}
+
+byggProgress()
+</script>
+</body>
+</html>

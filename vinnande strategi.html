@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <title>Godisleken</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1a0a2e;
+      --surface: #2d1b4e;
+      --surface2: #3d2460;
+      --accent1: #ff6b9d;
+      --accent2: #ffd93d;
+      --accent3: #6bcb77;
+      --text: #f0e6ff;
+      --muted: #9b7fc0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Nunito', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px;
+      background-image:
+        radial-gradient(ellipse at 20% 10%, #3d1278 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, #1a0a5e 0%, transparent 50%);
+    }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 3rem;
+      letter-spacing: 2px;
+      color: var(--accent2);
+      text-shadow: 0 0 30px rgba(255,217,61,0.4);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    /* Setup panel */
+    #setup-panel {
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: 20px;
+      padding: 20px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      width: 100%;
+      max-width: 520px;
+    }
+
+    #setup-panel label {
+      font-weight: 700;
+      color: var(--accent2);
+      font-size: 1rem;
+    }
+
+    #antal-input {
+      width: 80px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 2px solid var(--surface2);
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #antal-input:focus { border-color: var(--accent2); }
+
+    /* Player cards */
+    .players {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .player-card {
+      flex: 1;
+      background: var(--surface);
+      border: 2px solid var(--surface2);
+      border-radius: 16px;
+      padding: 14px 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .player-card.active {
+      border-color: var(--accent1);
+      background: var(--surface2);
+      box-shadow: 0 0 20px rgba(255,107,157,0.3);
+      transform: translateY(-3px);
+    }
+
+    .player-card.winner {
+      border-color: var(--accent3);
+      background: #1a3d22;
+      box-shadow: 0 0 30px rgba(107,203,119,0.5);
+    }
+
+    /* Editable name */
+    .name-input {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      background: transparent;
+      border: none;
+      border-bottom: 2px dashed transparent;
+      color: inherit;
+      text-align: center;
+      width: 100%;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      margin-bottom: 4px;
+      padding: 2px 4px;
+    }
+    .name-input:hover { border-bottom-color: rgba(255,255,255,0.2); }
+    .name-input:focus { border-bottom-color: var(--accent2); cursor: text; }
+
+    #namn1 { color: var(--accent1); }
+    #namn2 { color: #7eb8ff; }
+
+    .player-status {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .player-card.active .player-status {
+      color: var(--accent2);
+      font-weight: 700;
+    }
+
+    /* Counter */
+    .counter {
+      font-family: 'Fredoka One', cursive;
+      font-size: 5rem;
+      color: var(--accent2);
+      line-height: 1;
+      text-shadow: 0 0 40px rgba(255,217,61,0.5);
+      margin-bottom: 4px;
+      transition: all 0.3s ease;
+    }
+    .counter-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    .counter.win { color: var(--accent3); text-shadow: 0 0 40px rgba(107,203,119,0.6); }
+
+    /* Candy grid */
+    #godisar {
+      width: 100%;
+      max-width: 520px;
+      min-height: 80px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 28px;
+      padding: 16px;
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--surface2);
+    }
+
+    .godis-emoji {
+      font-size: 1.6rem;
+      animation: popIn 0.3s ease;
+      cursor: default;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* Action buttons */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-ta {
+      background: linear-gradient(135deg, var(--accent1), #c0395f);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 28px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(255,107,157,0.4);
+      transition: all 0.15s ease;
+    }
+    .btn-ta:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255,107,157,0.5);
+    }
+    .btn-ta:active:not(:disabled) { transform: translateY(1px); }
+    .btn-ta:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-reset {
+      background: var(--surface2);
+      color: var(--muted);
+      border: 2px solid var(--surface2);
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-reset:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* Win overlay */
+    #win-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 3, 20, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      text-align: center;
+      padding: 24px;
+    }
+    #win-overlay.synlig { display: flex; }
+
+    .win-konfetti {
+      font-size: 3rem;
+      animation: spinBounce 1s ease infinite alternate;
+    }
+    @keyframes spinBounce {
+      from { transform: rotate(-15deg) scale(1); }
+      to   { transform: rotate(15deg) scale(1.2); }
+    }
+
+    .win-titel {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem;
+      color: var(--accent2);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .win-namn {
+      font-family: 'Fredoka One', cursive;
+      font-size: 4rem;
+      color: var(--accent3);
+      text-shadow: 0 0 60px rgba(107,203,119,0.8), 0 0 120px rgba(107,203,119,0.4);
+      line-height: 1.1;
+      animation: pulseGlow 1.5s ease infinite alternate;
+    }
+    @keyframes pulseGlow {
+      from { text-shadow: 0 0 40px rgba(107,203,119,0.6); }
+      to   { text-shadow: 0 0 80px rgba(107,203,119,1), 0 0 120px rgba(107,203,119,0.5); }
+    }
+
+    .win-undertitel {
+      font-size: 1.1rem;
+      color: var(--muted);
+    }
+
+    .win-stjarnor {
+      font-size: 2rem;
+      letter-spacing: 8px;
+    }
+
+    .btn-spelaigen {
+      background: linear-gradient(135deg, var(--accent3), #3a8f47);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 16px 40px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 6px 24px rgba(107,203,119,0.4);
+      transition: all 0.2s ease;
+      margin-top: 10px;
+    }
+    .btn-spelaigen:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(107,203,119,0.6);
+    }
+  </style>
+</head>
+<body>
+
+<h1>🍬 Godisleken</h1>
+<p class="subtitle" id="subtitle">Ta 1, 2 eller 3 godisar — den som tar sist vinner!</p>
+
+<div id="setup-panel">
+  <label for="antal-input">Antal godisar:</label>
+  <input id="antal-input" type="number" min="5" max="200" value="50">
+  <label for="max-input">Max per tur:</label>
+  <input id="max-input" type="number" min="1" max="10" value="3">
+  <button class="btn-reset" onclick="starta()">Starta nytt spel</button>
+</div>
+
+<div class="players">
+  <div class="player-card active" id="kort1">
+    <input class="name-input" id="namn1" type="text" value="Spelare 1" maxlength="16" title="Klicka för att byta namn">
+    <div class="player-status" id="status1">Din tur</div>
+  </div>
+  <div class="player-card" id="kort2">
+    <input class="name-input" id="namn2" type="text" value="Spelare 2" maxlength="16" title="Klicka för att byta namn">
+    <div class="player-status" id="status2">Väntar...</div>
+  </div>
+</div>
+
+<div class="counter" id="kvar">50</div>
+<div class="counter-label">godisar kvar</div>
+
+<div id="godisar"></div>
+
+<div class="action-buttons" id="action-buttons"></div>
+
+<!-- Win overlay -->
+<div id="win-overlay">
+  <div class="win-konfetti">🎊</div>
+  <div class="win-titel">Grattis till vinnaren!</div>
+  <div class="win-namn" id="win-namn">???</div>
+  <div class="win-stjarnor">⭐ ⭐ ⭐</div>
+  <div class="win-undertitel" id="win-undertitel">tog det sista godis!</div>
+  <button class="btn-spelaigen" onclick="stangOverlay()">Spela igen 🍬</button>
+</div>
+
+<script>
+  var kvar = 50
+  var spelare = 1
+  var maxPerTur = 3
+
+  starta()
+
+  function hamtaNamn(nr) {
+    var val = document.getElementById("namn" + nr).value.trim()
+    return val !== "" ? val : "Spelare " + nr
+  }
+
+  function skapaKnappar() {
+    var container = document.getElementById("action-buttons")
+    container.innerHTML = ""
+    for (var i = 1; i <= maxPerTur; i++) {
+      var btn = document.createElement("button")
+      btn.className = "btn-ta"
+      btn.id = "knapp" + i
+      btn.innerHTML = "Ta " + i
+      btn.setAttribute("data-antal", i)
+      btn.onclick = (function(n) { return function() { ta(n) } })(i)
+      container.appendChild(btn)
+    }
+  }
+
+  function uppdateraKnappar() {
+    for (var i = 1; i <= maxPerTur; i++) {
+      var btn = document.getElementById("knapp" + i)
+      if (btn) btn.disabled = kvar < i
+    }
+  }
+
+  function disableAllaKnappar() {
+    for (var i = 1; i <= maxPerTur; i++) {
+      var btn = document.getElementById("knapp" + i)
+      if (btn) btn.disabled = true
+    }
+  }
+
+  function ta(antal) {
+    if (antal > kvar) return
+
+    kvar = kvar - antal
+    document.getElementById("kvar").innerHTML = kvar
+    visaGodisar()
+    uppdateraKnappar()
+
+    if (kvar == 0) {
+      var vinnare = hamtaNamn(spelare)
+      var forlorare = spelare == 1 ? 2 : 1
+
+      document.getElementById("kvar").classList.add("win")
+      disableAllaKnappar()
+
+      document.getElementById("kort" + spelare).classList.remove("active")
+      document.getElementById("kort" + spelare).classList.add("winner")
+      document.getElementById("status" + spelare).innerHTML = "🏆 Vinnare!"
+      document.getElementById("kort" + forlorare).classList.remove("active")
+      document.getElementById("status" + forlorare).innerHTML = "Bättre lycka nästa gång"
+
+      document.getElementById("win-namn").innerHTML = vinnare
+      document.getElementById("win-overlay").classList.add("synlig")
+      return
+    }
+
+    spelare = spelare == 1 ? 2 : 1
+    document.getElementById("kort1").classList.toggle("active", spelare == 1)
+    document.getElementById("kort2").classList.toggle("active", spelare == 2)
+    document.getElementById("status1").innerHTML = spelare == 1 ? "Din tur" : "Väntar..."
+    document.getElementById("status2").innerHTML = spelare == 2 ? "Din tur" : "Väntar..."
+  }
+
+  function stangOverlay() {
+    document.getElementById("win-overlay").classList.remove("synlig")
+    starta()
+  }
+
+  function starta() {
+    var antalInput = parseInt(document.getElementById("antal-input").value)
+    if (isNaN(antalInput) || antalInput < 5) antalInput = 5
+    if (antalInput > 200) antalInput = 200
+    document.getElementById("antal-input").value = antalInput
+
+    var maxInput = parseInt(document.getElementById("max-input").value)
+    if (isNaN(maxInput) || maxInput < 1) maxInput = 1
+    if (maxInput > 10) maxInput = 10
+    document.getElementById("max-input").value = maxInput
+
+    kvar = antalInput
+    maxPerTur = maxInput
+    spelare = 1
+
+    document.getElementById("subtitle").innerHTML =
+      "Ta 1–" + maxPerTur + " godisar per tur — den som tar sist vinner!"
+
+    document.getElementById("kvar").innerHTML = kvar
+    document.getElementById("kvar").classList.remove("win")
+
+    document.getElementById("kort1").classList.add("active")
+    document.getElementById("kort1").classList.remove("winner")
+    document.getElementById("kort2").classList.remove("active")
+    document.getElementById("kort2").classList.remove("winner")
+    document.getElementById("status1").innerHTML = "Din tur"
+    document.getElementById("status2").innerHTML = "Väntar..."
+
+    skapaKnappar()
+    visaGodisar()
+    uppdateraKnappar()
+  }
+
+  function visaGodisar() {
+    var godisTypes = ["🍬", "🍭", "🍫", "🧁", "🍩"]
+    var html = ""
+    for (var i = 0; i < kvar; i++) {
+      var typ = godisTypes[i % godisTypes.length]
+      html += '<span class="godis-emoji">' + typ + '</span>'
+    }
+    document.getElementById("godisar").innerHTML = html
+  }
+</script>
+
+</body>
+</html>
